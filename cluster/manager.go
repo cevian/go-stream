@@ -2,10 +2,9 @@ package cluster
 
 import (
 	"encoding/json"
-	"github.com/cloudflare/golog/logger"
+	"github.com/cloudflare/go-stream/util/slog"
 	"io/ioutil"
 	"net/http"
-	"github.com/cloudflare/go-stream/util/slog"
 	"strconv"
 	"time"
 )
@@ -78,7 +77,7 @@ func (c *DynamicBBManager) pullLatestEra() (err error) {
 					we := NewWeightedEra()
 					for _, node := range bbr.Nodes {
 						n := NewWeightedNode(node.Name, node.Ip, strconv.Itoa(node.Port), node.Disk_free, node.Load)
-						slog.Logf(logger.Levels.Debug, "Trasport LOG INFO %v", n)
+						slog.Debugf("Trasport LOG INFO %v", n)
 						we.Add(n)
 					}
 
@@ -97,13 +96,13 @@ func (c *DynamicBBManager) pullLatestEra() (err error) {
 					// Once we have hit one BB server with no error, no need to try any others.
 					break
 				} else {
-					slog.Logf(logger.Levels.Error, "Unmarshal Error %v", err)
+					slog.Errorf("Unmarshal Error %v", err)
 				}
 			} else {
-				slog.Logf(logger.Levels.Error, "Read Error %v", err)
+				slog.Errorf("Read Error %v", err)
 			}
 		} else {
-			slog.Logf(logger.Levels.Error, "Network GET Error %v", err)
+			slog.Errorf("Network GET Error %v", err)
 		}
 	}
 	return
@@ -112,10 +111,10 @@ func (c *DynamicBBManager) pullLatestEra() (err error) {
 func (c *DynamicBBManager) keepErasCurrent() {
 	for {
 		time.Sleep(60 * time.Second)
-		slog.Logf(logger.Levels.Debug, "Updating to new era")
+		slog.Debugf("Updating to new era")
 		err := c.pullLatestEra()
 		if err != nil {
-			slog.Logf(logger.Levels.Error, "Cannot get a valid era %v", err)
+			slog.Errorf("Cannot get a valid era %v", err)
 		}
 	}
 }

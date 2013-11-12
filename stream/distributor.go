@@ -2,7 +2,6 @@ package stream
 
 import (
 	"errors"
-	"github.com/cloudflare/golog/logger"
 	"github.com/cloudflare/go-stream/util/slog"
 )
 
@@ -65,7 +64,7 @@ func (op *DistributeOperator) Run() error {
 			op.runner.HardStop()
 			return nil
 		case <-op.runner.CloseNotifier():
-			slog.Logf(logger.Levels.Error, "Unexpected child close in distribute op")
+			slog.Errorf("Unexpected child close in distribute op")
 			op.runner.HardStop()
 			return errors.New("Unexpected distribute child close")
 		}

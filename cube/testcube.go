@@ -19,5 +19,3 @@ func InsertTestCube(c *Cube, d1 int, d2 int, A1 int, A2 int) {
 	a := TestCubeAggregates{NewCountAggregate(A1), NewCountAggregate(A2)}
 	c.Insert(d, a)
 }
-
-

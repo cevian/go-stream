@@ -2,9 +2,9 @@ package encoding
 
 import (
 	"code.google.com/p/goprotobuf/proto"
-	"log"
 	"github.com/cloudflare/go-stream/stream"
 	"github.com/cloudflare/go-stream/stream/mapper"
+	"log"
 	//"reflect"
 )
 

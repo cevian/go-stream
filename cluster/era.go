@@ -1,7 +1,6 @@
 package cluster
 
 import (
-	"github.com/cloudflare/golog/logger"
 	"github.com/cloudflare/go-stream/util/slog"
 )
 
@@ -58,11 +57,11 @@ func (s *WeightedEra) NormalizeAndPopulateMap() {
 	}
 
 	if total == 0 {
-		slog.Logf(logger.Levels.Error, "Total Node Weight 0")
+		slog.Errorf("Total Node Weight 0")
 		return
 	}
 
-	slog.Logf(logger.Levels.Debug, "Total Node Weight %f", total)
+	slog.Debugf("Total Node Weight %f", total)
 	if total < MAX_WEIGHT {
 		// Scale weights up
 		scalar = MAX_WEIGHT / total
@@ -73,7 +72,7 @@ func (s *WeightedEra) NormalizeAndPopulateMap() {
 	for _, n := range s.nodes {
 		wn := n.(*WeightedNode)
 		wn.weight = uint32(((float32(wn.weight) * scalar) / total) * MAX_WEIGHT)
-		slog.Logf(logger.Levels.Debug, "New Weight %d", wn.weight)
+		slog.Debugf("New Weight %d", wn.weight)
 		for i := lastPosit; uint32(i) < wn.weight && i < MAX_WEIGHT; i++ {
 			s.nodeMap[i] = wn
 			lastPosit++

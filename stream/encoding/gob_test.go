@@ -7,6 +7,7 @@ import (
 
 import (
 	"github.com/cloudflare/go-stream/stream"
+	"github.com/cloudflare/go-stream/stream/mapper"
 )
 
 /*import (
@@ -20,7 +21,6 @@ import (
 //import "github.com/cloudflare/go-stream/stream/encoding"
 
 func TestGob(t *testing.T) {
-
 	input := make(chan stream.Object)
 
 	enc := NewGobEncodeRop()
@@ -31,10 +31,10 @@ func TestGob(t *testing.T) {
 
 	intDecGenFn := func() interface{} {
 		decoder := GobGeneralDecoder()
-		return func(in []byte) []int {
+		return func(obj stream.Object, out mapper.Outputer) {
 			var i int
-			decoder(in, &i)
-			return []int{i}
+			decoder(obj.([]byte), &i)
+			out.Out(1) <- i
 		}
 	}
 	decodeOp := NewGobDecodeRop(intDecGenFn)

@@ -1,7 +1,6 @@
 package stream
 
 import (
-	"github.com/cloudflare/golog/logger"
 	"github.com/cloudflare/go-stream/util/slog"
 )
 
@@ -56,7 +55,7 @@ func (c *SimpleChain) NewSubChain() Chain {
 func (c *SimpleChain) Add(o Operator) Chain {
 	ops := c.runner.Operators()
 	if len(ops) > 0 {
-		slog.Logf(logger.Levels.Info, "Setting input channel of %s", Name(o))
+		slog.Infof("Setting input channel of %s", Name(o))
 		last := ops[len(ops)-1]
 		lastOutCh := last.(Out).Out()
 		o.(In).SetIn(lastOutCh)
@@ -64,7 +63,7 @@ func (c *SimpleChain) Add(o Operator) Chain {
 
 	out, ok := o.(Out)
 	if ok {
-		slog.Logf(logger.Levels.Info, "Setting output channel of %s", Name(o))
+		slog.Infof("Setting output channel of %s", Name(o))
 		ch := make(chan Object, CHAN_SLACK)
 		out.SetOut(ch)
 	}
@@ -81,7 +80,7 @@ func (c *SimpleChain) Start() error {
 func (c *SimpleChain) SoftStop() error {
 	if !c.sentstop {
 		c.sentstop = true
-		slog.Logf(logger.Levels.Warn, "In soft close")
+		slog.Warnf("In soft close")
 		ops := c.runner.Operators()
 		ops[0].Stop()
 	}
@@ -92,26 +91,26 @@ func (c *SimpleChain) SoftStop() error {
 func (c *SimpleChain) Stop() error {
 	if !c.sentstop {
 		c.sentstop = true
-		slog.Logf(logger.Levels.Warn, "In hard close")
+		slog.Warnf("In hard close")
 		c.runner.HardStop()
 	}
 	return nil
 }
 
 func (c *SimpleChain) Wait() error {
-	slog.Logf(logger.Levels.Info, "Waiting for closenotify %s", c.Name)
-	<-c.runner.CloseNotifier()
-	select {
-	case err := <-c.runner.ErrorChannel():
-		slog.Logf(logger.Levels.Warn, "Hard Close in SimpleChain %s %v", c.Name, err)
+	//slog.Logf(logger.Levels.Info, "Waiting for closenotify %s", c.Name)
+	//<-c.runner.CloseNotifier()
+	err, errOk := <-c.runner.ErrorChannel()
+	if errOk {
+		slog.Warnf("Hard Close in SimpleChain %s %v", c.Name, err)
 		c.Stop()
-	default:
-		slog.Logf(logger.Levels.Info, "Soft Close in SimpleChain %s", c.Name)
+	} else {
+		slog.Infof("Soft Close in SimpleChain %s", c.Name)
 		c.SoftStop()
 	}
-	slog.Logf(logger.Levels.Info, "Waiting for wg")
-	c.runner.WaitGroup().Wait()
-	slog.Logf(logger.Levels.Info, "Exiting SimpleChain")
+	slog.Infof("Waiting for runner to finish")
+	c.runner.Wait()
+	slog.Infof("Exiting SimpleChain")
 
 	return nil
 }

@@ -4,25 +4,17 @@ import (
 	"bytes"
 	"crypto/rand"
 	"fmt"
-	metrics "github.com/rcrowley/go-metrics"
+	"github.com/cloudflare/go-stream/stream"
+	"github.com/cloudflare/go-stream/util/slog"
 	"io"
 	"log"
-	"github.com/cloudflare/go-stream/stream"
-	baseutil "github.com/cloudflare/go-stream/util"
-	"github.com/cloudflare/go-stream/util/slog"
 	"sync"
 	"testing"
 	"time"
 )
 
 func TestSimpleTransfer(t *testing.T) {
-
-	log.SetFlags(log.Llongfile)
-	slog.Init(slog.DEFAULT_STATS_LOG_NAME,
-		slog.DEFAULT_STATS_LOG_LEVEL,
-		slog.DEFAULT_STATS_LOG_PREFIX,
-		baseutil.NewStreamingMetrics(metrics.NewRegistry()),
-		slog.DEFAULT_STATS_ADDR)
+	slog.InitDefaultMetrics()
 
 	datach := make(chan stream.Object, 100)
 	c := DefaultClient("127.0.0.1")

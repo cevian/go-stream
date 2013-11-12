@@ -1,7 +1,6 @@
 package stream
 
 import (
-	"github.com/cloudflare/golog/logger"
 	"github.com/cloudflare/go-stream/util/slog"
 	"time"
 )
@@ -116,7 +115,7 @@ func (op *BatcherOperator) Run() error {
 				if op.container.HasItems() {
 					slog.Fatalf("Last flush did not empty container, some stuff will never be sent")
 				}
-				slog.Logf(logger.Levels.Debug, "Batch Operator ", op.name, " flushed ", op.total_flushes)
+				slog.Debugf("Batch Operator ", op.name, " flushed ", op.total_flushes)
 				return nil
 			}
 		//case BE

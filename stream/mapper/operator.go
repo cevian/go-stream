@@ -137,7 +137,7 @@ func (o *Op) Exit() {
 }
 
 func (o *Op) Run() error {
-	defer close(o.Out())
+	defer o.CloseOutput()
 	//perform some validation
 	//Processor.Validate()
 

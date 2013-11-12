@@ -3,11 +3,10 @@ package unixgram
 import (
 	"bytes"
 	"encoding/hex"
-	"github.com/cloudflare/golog/logger"
-	"net"
-	"os"
 	"github.com/cloudflare/go-stream/stream"
 	"github.com/cloudflare/go-stream/util/slog"
+	"net"
+	"os"
 	"syscall"
 )
 
@@ -98,7 +97,7 @@ func (src *UnixgramSource) Run() error {
 
 		select {
 		case <-src.StopNotifier:
-			slog.Logf(logger.Levels.Info, "Closing: count ", count, "Sent:", sent)
+			slog.Infof("Closing: count ", count, "Sent:", sent)
 			return nil
 		default:
 		}

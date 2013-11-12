@@ -3,13 +3,12 @@ package transport
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudflare/golog/logger"
-	"net"
 	"github.com/cloudflare/go-stream/stream"
 	"github.com/cloudflare/go-stream/stream/sink"
 	"github.com/cloudflare/go-stream/stream/source"
 	"github.com/cloudflare/go-stream/util"
 	"github.com/cloudflare/go-stream/util/slog"
+	"net"
 	"sync"
 	"time"
 )
@@ -84,14 +83,14 @@ func (src *Client) Run() error {
 	for src.retries < RETRY_MAX {
 		err := src.connect()
 		if err == nil {
-			slog.Logf(logger.Levels.Warn, "Connection failed without error")
+			slog.Warnf("Connection failed without error")
 			return err
 		} else {
-			slog.Logf(logger.Levels.Error, "Connection failed with error, retrying: %s", err)
+			slog.Errorf("Connection failed with error, retrying: %s", err)
 			time.Sleep(1 * time.Second)
 		}
 	}
-	slog.Logf(logger.Levels.Error, "Connection failed retries exceeded. Leftover: %d", src.buf.Len())
+	slog.Errorf("Connection failed retries exceeded. Leftover: %d", src.buf.Len())
 	return nil //>>>>>>>>>>>>>>???????????????????????
 }
 
@@ -120,7 +119,7 @@ func (src *Client) connect() error {
 
 	conn, err := net.Dial("tcp", src.addr)
 	if err != nil {
-		slog.Logf(logger.Levels.Error, "Cannot establish a connection with %s %v", src.addr, err)
+		slog.Errorf("Cannot establish a connection with %s %v", src.addr, err)
 		return err
 	}
 
@@ -137,7 +136,7 @@ func (src *Client) connect() error {
 		defer close(rcvChCloseNotifier)
 		err := receiver.Run()
 		if err != nil {
-			slog.Logf(logger.Levels.Error, "Error in client reciever: %v", err)
+			slog.Errorf("Error in client reciever: %v", err)
 		}
 	}()
 	//receiver will be closed by the sender after it is done sending. receiver closed via a hard stop.
@@ -156,7 +155,7 @@ func (src *Client) connect() error {
 		defer close(sndChCloseNotifier)
 		err := sender.Run()
 		if err != nil {
-			slog.Logf(logger.Levels.Error, "Error in client sender: %v", err)
+			slog.Errorf("Error in client sender: %v", err)
 		}
 	}()
 	//sender closed by closing the sndChData channel or by a hard stop
@@ -206,11 +205,11 @@ func (src *Client) connect() error {
 		case cnt := <-writeNotifier.NotificationChannel():
 			writesNotCompleted -= cnt
 			if timer == nil {
-				slog.Logf(logger.Levels.Debug, "Seting timer %v, %v", time.Now(), time.Now().UnixNano())
+				slog.Debugf("Seting timer %v, %v", time.Now(), time.Now().UnixNano())
 				timer = src.resetAckTimer()
 			}
 		case obj, ok := <-rcvChData:
-			slog.Logf(logger.Levels.Debug, "in Rcv: %v", ok)
+			slog.Debugf("in Rcv: %v", ok)
 			if !ok {
 				return errors.New("Connection to Server was Broken in Recieve Direction")
 			}

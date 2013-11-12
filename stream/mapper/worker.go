@@ -1,10 +1,9 @@
 package mapper
 
 import (
-	"github.com/cloudflare/golog/logger"
-	"reflect"
 	"github.com/cloudflare/go-stream/stream"
 	"github.com/cloudflare/go-stream/util/slog"
+	"reflect"
 )
 
 type Worker interface {
@@ -50,7 +49,7 @@ func (w *CallbackWorker) Validate(inCh chan stream.Object, typeName string) bool
 
 	calltype := w.callback.Type()
 
-	slog.Logf(logger.Levels.Info, "Checking %s", typeName)
+	slog.Infof("Checking %s", typeName)
 
 	//TODO: forbid struct results pass pointers to structs instead
 
@@ -105,6 +104,6 @@ func (w *EfficientWorker) Map(input stream.Object, out Outputer) {
 }
 
 func (w *EfficientWorker) Validate(inCh chan stream.Object, typeName string) bool {
-	slog.Logf(logger.Levels.Info, "Checking %s", typeName)
+	slog.Infof("Checking %s", typeName)
 	return true
 }

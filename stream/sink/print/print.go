@@ -1,10 +1,10 @@
 package print
 
 import (
-	"log"
-	"os"
 	"github.com/cloudflare/go-stream/stream"
 	"github.com/cloudflare/go-stream/stream/sink"
+	"log"
+	"os"
 )
 
 type PrintSink struct {

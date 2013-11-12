@@ -3,7 +3,6 @@ package transport
 import (
 	"bytes"
 	"encoding/binary"
-	"github.com/cloudflare/golog/logger"
 	"github.com/cloudflare/go-stream/stream"
 	"github.com/cloudflare/go-stream/util/slog"
 )
@@ -23,12 +22,12 @@ func sendData(sndCh chan<- stream.Object, data []byte, seq int) {
 }
 
 func sendAck(sndCh chan<- stream.Object, seq int) {
-	slog.Logf(logger.Levels.Debug, "Sending back ack %d", seq)
+	slog.Debugf("Sending back ack %d", seq)
 	sendMsg(sndCh, ACK, seq, []byte{})
 }
 
 func sendClose(sndCh chan<- stream.Object, seq int) {
-	slog.Logf(logger.Levels.Debug, "Sending Close %d", seq)
+	slog.Debugf("Sending Close %d", seq)
 	sendMsg(sndCh, CLOSE, seq, []byte{})
 }
 

@@ -2,9 +2,9 @@ package compress
 
 import (
 	"code.google.com/p/snappy-go/snappy"
-	"log"
 	"github.com/cloudflare/go-stream/stream"
 	"github.com/cloudflare/go-stream/stream/mapper"
+	"log"
 )
 
 func NewSnappyEncodeOp() stream.Operator {

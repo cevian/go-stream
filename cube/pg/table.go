@@ -5,8 +5,8 @@ import (
 	"encoding/hex"
 	//"database/sql"
 	"fmt"
-	"reflect"
 	"github.com/cloudflare/go-stream/cube"
+	"reflect"
 	"strings"
 	"time"
 )

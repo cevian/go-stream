@@ -13,7 +13,7 @@ type InterfaceReaderSource struct {
 }
 
 func (src InterfaceReaderSource) Run() error {
-	defer close(src.Out())
+	defer src.CloseOutput()
 	for {
 		msg, eofReached, err := src.reader.ReadNext()
 		if err != nil {

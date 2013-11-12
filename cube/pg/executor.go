@@ -3,10 +3,9 @@ package pg
 import (
 	"database/sql/driver"
 	"github.com/cevian/pq"
-	"github.com/cloudflare/golog/logger"
-	"reflect"
 	"github.com/cloudflare/go-stream/cube"
 	"github.com/cloudflare/go-stream/util/slog"
+	"reflect"
 )
 
 type Executor struct {
@@ -35,7 +34,7 @@ func (e *Executor) ExecErr(sql string, args ...interface{}) (driver.Result, erro
 func (e *Executor) Exec(sql string, args ...interface{}) driver.Result {
 	res, err := e.ExecErr(sql, args...)
 	if err != nil {
-		slog.Logf(logger.Levels.Error, "Sql: %v Err: %v", sql, err)
+		slog.Errorf("Sql: %v Err: %v", sql, err)
 	}
 	return res
 }

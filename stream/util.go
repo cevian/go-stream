@@ -34,7 +34,8 @@ func NewBaseIn(slack int) *BaseIn {
 }
 
 type BaseOut struct {
-	out chan Object
+	out         chan Object
+	shouldClose bool
 }
 
 func (o *BaseOut) Out() chan Object {
@@ -45,8 +46,18 @@ func (o *BaseOut) SetOut(c chan Object) {
 	o.out = c
 }
 
+func (o *BaseOut) SetCloseOnExit(flag bool) {
+	o.shouldClose = flag
+}
+
+func (o *BaseOut) CloseOutput() {
+	if o.shouldClose {
+		close(o.out)
+	}
+}
+
 func NewBaseOut(slack int) *BaseOut {
-	return &BaseOut{make(chan Object, slack)}
+	return &BaseOut{make(chan Object, slack), true}
 }
 
 type BaseInOutOp struct {

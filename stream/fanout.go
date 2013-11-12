@@ -2,7 +2,6 @@ package stream
 
 import (
 	"errors"
-	"github.com/cloudflare/golog/logger"
 	"github.com/cloudflare/go-stream/util/slog"
 )
 
@@ -54,7 +53,7 @@ func (op *FanoutOperator) Run() error {
 			op.runner.HardStop()
 			return nil
 		case <-op.runner.CloseNotifier():
-			slog.Logf(logger.Levels.Error, "Unexpected child close in fanout op")
+			slog.Errorf("Unexpected child close in fanout op")
 			op.runner.HardStop()
 			return errors.New("Unexpected child close")
 		}

@@ -4,11 +4,10 @@ import (
 	"bufio"
 	"encoding/binary"
 	//"errors"
-	"github.com/cloudflare/golog/logger"
-	"io"
-	"math"
 	"github.com/cloudflare/go-stream/stream"
 	"github.com/cloudflare/go-stream/util/slog"
+	"io"
+	"math"
 )
 
 type NextReader interface {
@@ -109,10 +108,10 @@ func (src *NextReaderSource) Run() error {
 	//This operator always stops the read nexter before exiting.
 	//But can't defer here since in the case of a hardstop readnexter.Stop() was already called
 
-	defer close(src.Out())
+	defer src.CloseOutput()
 	var count uint32
 	count = 0
-	slog.Logf(logger.Levels.Debug, "Reading up to %d %s", src.MaxItems, " tuples")
+	slog.Debugf("Reading up to %d %s", src.MaxItems, " tuples")
 	for {
 		b, eofReached, err := src.readnexter.ReadNext()
 		//if I've been stopped, exit no matter what I've read
@@ -123,7 +122,7 @@ func (src *NextReaderSource) Run() error {
 		default:
 		}
 		if err != nil {
-			slog.Logf(logger.Levels.Error, "Reader encountered error %v", err)
+			slog.Errorf("Reader encountered error %v", err)
 			src.readnexter.Stop()
 			return err
 		} else if len(b) > 0 {
@@ -131,7 +130,7 @@ func (src *NextReaderSource) Run() error {
 			src.Out() <- b
 		}
 		if eofReached || (count >= src.MaxItems) {
-			slog.Logf(logger.Levels.Debug, "Got eof in Next Reader Source %d, %d", count, src.MaxItems)
+			slog.Debugf("Got eof in Next Reader Source %d, %d", count, src.MaxItems)
 			src.readnexter.Stop()
 			return nil
 		}

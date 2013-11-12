@@ -1,9 +1,9 @@
 package timing
 
 import (
-	"log"
 	"github.com/cloudflare/go-stream/stream"
 	"github.com/cloudflare/go-stream/stream/mapper"
+	"log"
 	"sync/atomic"
 	"time"
 )

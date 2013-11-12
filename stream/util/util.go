@@ -1,10 +1,10 @@
 package util
 
 import (
-	"log"
-	"os"
 	"github.com/cloudflare/go-stream/stream"
 	"github.com/cloudflare/go-stream/stream/mapper"
+	"log"
+	"os"
 )
 
 func NewDropOp() *mapper.Op {

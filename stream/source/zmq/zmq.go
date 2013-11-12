@@ -30,7 +30,7 @@ func (src ZmqSource) Run() error {
 	//the socket has to run from the same goroutine because it is not thread safe
 	//memory barrier executed when goroutines moved between threads
 	//reference: https://groups.google.com/forum/#!topic/golang-nuts/eABYrBA5LEk
-	defer close(src.Out())
+	defer src.CloseOutput()
 
 	socket, err := zmqapi.NewSocket(zmqapi.PULL)
 	if err != nil {

@@ -3,10 +3,10 @@ package encoding
 import (
 	"bytes"
 	"encoding/gob"
-	"io"
-	"log"
 	"github.com/cloudflare/go-stream/stream"
 	"github.com/cloudflare/go-stream/stream/mapper"
+	"io"
+	"log"
 	//"reflect"
 )
 

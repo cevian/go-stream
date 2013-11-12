@@ -1,12 +1,11 @@
 package transport
 
 import (
-	"github.com/cloudflare/golog/logger"
-	"net"
 	"github.com/cloudflare/go-stream/stream"
 	"github.com/cloudflare/go-stream/stream/sink"
 	"github.com/cloudflare/go-stream/stream/source"
 	"github.com/cloudflare/go-stream/util/slog"
+	"net"
 	"sync"
 	"time"
 )
@@ -55,7 +54,7 @@ func (src Server) Run() error {
 
 	ln, err := net.Listen("tcp", src.addr)
 	if err != nil {
-		slog.Logf(logger.Levels.Error, "Error listening %v", err)
+		slog.Errorf("Error listening %v", err)
 		return err
 	}
 
@@ -91,7 +90,7 @@ func (src Server) Run() error {
 			default:
 			}
 			if !hardClose && !softClose {
-				slog.Logf(logger.Levels.Error, "Accept Error %v", err)
+				slog.Errorf("Accept Error %v", err)
 			}
 			return nil
 		}
@@ -135,7 +134,7 @@ func (src Server) handleConnection(conn net.Conn) {
 		defer close(sndChCloseNotifier)
 		err := sender.Run()
 		if err != nil {
-			slog.Logf(logger.Levels.Error, "Error in server sender %v", err)
+			slog.Errorf("Error in server sender %v", err)
 		}
 	}()
 	defer sender.Stop()
@@ -151,7 +150,7 @@ func (src Server) handleConnection(conn net.Conn) {
 		defer close(rcvChCloseNotifier)
 		err := receiver.Run()
 		if err != nil {
-			slog.Logf(logger.Levels.Error, "Error in server reciever %v", err)
+			slog.Errorf("Error in server reciever %v", err)
 		}
 	}()
 	defer receiver.Stop()
@@ -166,7 +165,7 @@ func (src Server) handleConnection(conn net.Conn) {
 
 			if !ok {
 				//send last ack back??
-				slog.Logf(logger.Levels.Error, "Receive Channel Closed Without Close Message")
+				slog.Errorf("Receive Channel Closed Without Close Message")
 				return
 			}
 			command, seq, payload, err := parseMsg(obj.([]byte))
@@ -180,7 +179,7 @@ func (src Server) handleConnection(conn net.Conn) {
 						lastSentAck = lastGotAck
 						timer = nil
 					} else if timer == nil {
-						slog.Logf(logger.Levels.Debug, "Setting timer %v", time.Now())
+						slog.Debugf("Setting timer %v", time.Now())
 						timer = time.After(100 * time.Millisecond)
 					}
 					src.Out() <- payload
@@ -188,7 +187,7 @@ func (src Server) handleConnection(conn net.Conn) {
 					if lastGotAck > lastSentAck {
 						sendAck(sndChData, lastGotAck)
 					}
-					slog.Logf(logger.Levels.Info, "%s", "Server got close")
+					slog.Infof("%s", "Server got close")
 					return
 				} else {
 					slog.Fatalf("%v", "Server Got Unknown Command")
@@ -200,10 +199,10 @@ func (src Server) handleConnection(conn net.Conn) {
 			if len(rcvChData) > 0 {
 				continue //drain channel before exiting
 			}
-			slog.Logf(logger.Levels.Error, "Client asked for a close on recieve- should not happen, timer is nil = %v, %v", (timer == nil), time.Now())
+			slog.Errorf("Client asked for a close on recieve- should not happen, timer is nil = %v, %v", (timer == nil), time.Now())
 			return
 		case <-sndChCloseNotifier:
-			slog.Logf(logger.Levels.Error, "%v", "Server asked for a close on send - should not happen")
+			slog.Errorf("%v", "Server asked for a close on send - should not happen")
 			return
 		case <-timer:
 			sendAck(sndChData, lastGotAck)
