@@ -30,7 +30,7 @@ func (op *DistributeOperator) createBranch(key DistribKey) {
 	ch := make(chan Object, CHAN_SLACK)
 	newop.SetIn(ch)
 	op.runner.Add(newop)
-	op.runner.AsyncRun(newop)
+	op.runner.AsyncRun(newop, false)
 	op.outputs[key] = ch
 }
 

@@ -40,20 +40,22 @@ func (r *Runner) Operators() []Operator {
 	return r.ops
 }
 
-func (r *Runner) AsyncRun(op Operator) {
+func (r *Runner) AsyncRun(op Operator, startCloser bool) {
 	if r.finished {
 		panic("Runner finished")
 	}
 
 	r.wg.Add(1)
 
-	r.errorcloser.Do(func() {
-		go func() {
-			r.wg.Wait()
-			close(r.errors)
-			r.finished = true
-		}()
-	})
+	if startCloser {
+		r.errorcloser.Do(func() {
+			go func() {
+				r.wg.Wait()
+				close(r.errors)
+				r.finished = true
+			}()
+		})
+	}
 
 	go func() {
 		defer r.wg.Done()
@@ -79,9 +81,10 @@ func (r *Runner) Add(op Operator) {
 }
 
 func (r *Runner) AsyncRunAll() {
-	for _, op := range r.ops {
-		r.AsyncRun(op)
+	for _, op := range r.ops[:len(r.ops)-1] {
+		r.AsyncRun(op, false)
 	}
+	r.AsyncRun(r.ops[len(r.ops)-1], true)
 }
 
 func (r *Runner) HardStop() {
