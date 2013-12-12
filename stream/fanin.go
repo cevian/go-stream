@@ -20,8 +20,9 @@ type faninSrcOp interface {
 type FaninOperator struct {
 	*HardStopChannelCloser
 	*BaseIn
-	dst       faninDestOp
-	channel   chan Object
+	dst     faninDestOp
+	channel chan Object
+
 	runnerSrc *Runner
 	runnerDst *Runner
 	//ops     []fanoutChildOp // this can be a single operator or a chain
