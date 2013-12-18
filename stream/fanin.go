@@ -19,7 +19,7 @@ type faninSrcOp interface {
 
 type FaninOperator struct {
 	*HardStopChannelCloser
-	*BaseIn
+	//*BaseIn
 	dst     faninDestOp
 	channel chan Object
 
@@ -29,7 +29,7 @@ type FaninOperator struct {
 }
 
 func NewFaninOp() *FaninOperator {
-	return &FaninOperator{NewHardStopChannelCloser(), NewBaseIn(CHAN_SLACK), nil, make(chan Object, CHAN_SLACK), NewRunner(), NewRunner()}
+	return &FaninOperator{NewHardStopChannelCloser() /*NewBaseIn(CHAN_SLACK),*/, nil, make(chan Object, CHAN_SLACK), NewRunner(), NewRunner()}
 }
 
 func (op *FaninOperator) SetDest(newOp faninDestOp) {
