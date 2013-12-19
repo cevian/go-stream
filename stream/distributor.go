@@ -22,7 +22,8 @@ type DistributeOperator struct {
 }
 
 func NewDistributor(mapp func(Object) DistribKey, creator func(DistribKey) DistributorChildOp) *DistributeOperator {
-	return &DistributeOperator{NewHardStopChannelCloser(), NewBaseIn(CHAN_SLACK), mapp, creator, make(map[DistribKey]chan<- Object), NewRunner()}
+	return &DistributeOperator{NewHardStopChannelCloser(),
+		NewBaseIn(CHAN_SLACK), mapp, creator, make(map[DistribKey]chan<- Object), NewRunner()}
 }
 
 func (op *DistributeOperator) createBranch(key DistribKey) {

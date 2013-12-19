@@ -5,4 +5,5 @@ import "github.com/cloudflare/go-stream/stream"
 type Sourcer interface {
 	stream.Operator
 	stream.Out
+	SetCloseOnExit(flag bool)
 }

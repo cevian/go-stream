@@ -54,11 +54,14 @@ func (c *SimpleChain) NewSubChain() Chain {
 
 func (c *SimpleChain) Add(o Operator) Chain {
 	ops := c.runner.Operators()
-	if len(ops) > 0 {
+	opIn, isIn := o.(In)
+	if isIn && len(ops) > 0 {
 		slog.Infof("Setting input channel of %s", Name(o))
 		last := ops[len(ops)-1]
+
 		lastOutCh := last.(Out).Out()
-		o.(In).SetIn(lastOutCh)
+
+		opIn.SetIn(lastOutCh)
 	}
 
 	out, ok := o.(Out)

@@ -81,10 +81,14 @@ func (r *Runner) Add(op Operator) {
 }
 
 func (r *Runner) AsyncRunAll() {
-	for _, op := range r.ops[:len(r.ops)-1] {
-		r.AsyncRun(op, false)
+	if len(r.ops) > 1 {
+		for _, op := range r.ops[:len(r.ops)-1] {
+			r.AsyncRun(op, false)
+		}
 	}
-	r.AsyncRun(r.ops[len(r.ops)-1], true)
+	if len(r.ops) > 0 {
+		r.AsyncRun(r.ops[len(r.ops)-1], true)
+	}
 }
 
 func (r *Runner) HardStop() {
