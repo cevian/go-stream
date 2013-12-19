@@ -4,6 +4,7 @@ import (
 	"github.com/cloudflare/go-stream/stream"
 	"github.com/cloudflare/go-stream/stream/sink"
 	"github.com/cloudflare/go-stream/stream/source"
+	"github.com/cloudflare/go-stream/util/metrics"
 	"github.com/cloudflare/go-stream/util/slog"
 	"net"
 	"sync"
@@ -72,7 +73,7 @@ func (src Server) Run() error {
 		hardCloseListener(src.StopNotifier, scl, ln)
 	}()
 
-	slog.Gm.Register(stream.Name(src))
+	metrics.Gm.Register(stream.Name(src))
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -169,7 +170,7 @@ func (src Server) handleConnection(conn net.Conn) {
 				return
 			}
 			command, seq, payload, err := parseMsg(obj.([]byte))
-			slog.Gm.Event(&opName)
+			metrics.Gm.Event(&opName)
 
 			if err == nil {
 				if command == DATA {

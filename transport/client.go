@@ -7,6 +7,7 @@ import (
 	"github.com/cloudflare/go-stream/stream/sink"
 	"github.com/cloudflare/go-stream/stream/source"
 	"github.com/cloudflare/go-stream/util"
+	"github.com/cloudflare/go-stream/util/metrics"
 	"github.com/cloudflare/go-stream/util/slog"
 	"net"
 	"sync"
@@ -72,10 +73,10 @@ func (src *Client) Run() error {
 		src.running = false
 	}()
 
-	slog.Gm.Register(stream.Name(src))
+	metrics.Gm.Register(stream.Name(src))
 	go func(op string, s *Client) { // Update the queue depth on input for each phase
 		for {
-			slog.Gm.Update(&op, s.GetInDepth())
+			metrics.Gm.Update(&op, s.GetInDepth())
 			time.Sleep(1 * time.Second)
 		}
 	}(stream.Name(src), src)
@@ -199,7 +200,7 @@ func (src *Client) connect() error {
 				}
 				sendData(sndChData, bytes, seq)
 				writesNotCompleted += 1
-				slog.Gm.Event(&opName) // These are batched
+				metrics.Gm.Event(&opName) // These are batched
 				//slog.Logf(logger.Levels.Debug, "Sent batch -- length %d seq %d", len(bytes), seq)
 			}
 		case cnt := <-writeNotifier.NotificationChannel():
