@@ -59,6 +59,7 @@ func (op *DistributeOperator) Run() error {
 				}
 				ch <- obj
 			} else {
+				//slog.Fatalf("Nil!")
 				return nil
 			}
 		case <-op.StopNotifier:
