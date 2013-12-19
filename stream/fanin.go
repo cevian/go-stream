@@ -4,6 +4,11 @@ import (
 	"github.com/cloudflare/go-stream/util/slog"
 )
 
+/*
+TODO: consider case where distributor followed by a fan-in. The distributor makes no branches for fan-in and closes.
+fan-in will never close then
+*/
+
 type faninDestOp interface {
 	Operator
 	In
@@ -25,11 +30,12 @@ type FaninOperator struct {
 
 	runnerSrc *Runner
 	runnerDst *Runner
+	isRunning bool
 	//ops     []fanoutChildOp // this can be a single operator or a chain
 }
 
 func NewFaninOp() *FaninOperator {
-	return &FaninOperator{NewHardStopChannelCloser() /*NewBaseIn(CHAN_SLACK),*/, nil, make(chan Object, CHAN_SLACK), NewRunner(), NewRunner()}
+	return &FaninOperator{NewHardStopChannelCloser() /*NewBaseIn(CHAN_SLACK),*/, nil, make(chan Object, CHAN_SLACK), NewRunner(), NewRunner(), false}
 }
 
 func (op *FaninOperator) SetDest(newOp faninDestOp) {
@@ -42,6 +48,9 @@ func (op *FaninOperator) AddSrc(newOp faninSrcOp) {
 	newOp.SetOut(op.channel)
 	newOp.SetCloseOnExit(false)
 	op.runnerSrc.Add(newOp)
+	if op.isRunning {
+		op.runnerSrc.AsyncRun(newOp, true)
+	}
 }
 
 func (op *FaninOperator) Out() chan Object {
@@ -61,6 +70,7 @@ func (op *FaninOperator) Stop() error {
 func (op *FaninOperator) Run() error {
 	defer op.runnerSrc.Wait()
 	defer op.runnerDst.Wait()
+	op.isRunning = true
 	op.runnerSrc.AsyncRunAll()
 	op.runnerDst.AsyncRunAll()
 
