@@ -8,29 +8,31 @@ import (
 )
 
 func NewSnappyEncodeOp() stream.Operator {
-	generator := func() interface{} {
-		fn := func(in []byte) [][]byte {
-			compressed, err := snappy.Encode(nil, in)
+	name := "SnappyEncodeOp"
+	generator := func() mapper.Worker {
+		fn := func(obj stream.Object, out mapper.Outputer) {
+			compressed, err := snappy.Encode(nil, obj.([]byte))
 			if err != nil {
 				log.Printf("Error in snappy compression %v", err)
 			}
-			return [][]byte{compressed}
+			out.Out(1) <- compressed
 		}
-		return fn
+		return mapper.NewWorker(fn, name)
 	}
-	return mapper.NewOpFactory(generator, "NewSnappyEncodeOp")
+	return mapper.NewClosureOp(generator, nil, name)
 }
 
 func NewSnappyDecodeOp() stream.Operator {
-	generator := func() interface{} {
-		fn := func(in []byte) [][]byte {
-			decompressed, err := snappy.Decode(nil, in)
+	name := "SnappyDecodeOp"
+	generator := func() mapper.Worker {
+		fn := func(obj stream.Object, out mapper.Outputer) {
+			decompressed, err := snappy.Decode(nil, obj.([]byte))
 			if err != nil {
 				log.Printf("Error in snappy decompression %v", err)
 			}
-			return [][]byte{decompressed}
+			out.Out(1) <- decompressed
 		}
-		return fn
+		return mapper.NewWorker(fn, name)
 	}
-	return mapper.NewOpFactory(generator, "NewSnappyDecodeOp")
+	return mapper.NewClosureOp(generator, nil, name)
 }

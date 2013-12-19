@@ -3,7 +3,7 @@ package mapper
 import (
 	"github.com/cloudflare/go-stream/stream"
 	"github.com/cloudflare/go-stream/util/slog"
-	"reflect"
+	//"reflect"
 )
 
 type Worker interface {
@@ -11,6 +11,7 @@ type Worker interface {
 	Validate(inCh chan stream.Object, typeName string) bool
 }
 
+/*
 type CallbackWorker struct {
 	callback           reflect.Value
 	closeCallback      func()
@@ -59,48 +60,60 @@ func (w *CallbackWorker) Validate(inCh chan stream.Object, typeName string) bool
 	if calltype.NumIn() != 1 {
 		slog.Fatalf("%s: `Processor` should have 1 parameter but it has %d parameters", typeName, calltype.NumIn())
 	}
-	/*if !intype.AssignableTo(calltype.In(0)) {
-		log.Panicf("%s: `Processor` should have a parameter or type %s but is %s", typeName, calltype.In(0), intype)
-	}*/
+	//if !intype.AssignableTo(calltype.In(0)) {
+	//	log.Panicf("%s: `Processor` should have a parameter or type %s but is %s", typeName, calltype.In(0), intype)
+	//}
 	if calltype.NumOut() != 1 {
 		slog.Fatalf("%s `Processor` should return 1 value but it returns %d values", typeName, calltype.NumOut())
 	}
 	if calltype.Out(0).Kind() != reflect.Slice {
 		slog.Fatalf("%s `Processor` should return a slice but return %s", typeName, calltype.Out(0).Kind())
 	}
-	/*if calltype.Out(0).Elem() != outtype {
-		log.Panicf("%s `Processor` should return a slice of %s but is %s", typeName, outtype, calltype.Out(0).Elem())
-	}*/
+	//if calltype.Out(0).Elem() != outtype {
+	//	log.Panicf("%s `Processor` should return a slice of %s but is %s", typeName, outtype, calltype.Out(0).Elem())
+	//}
 	return true
 }
-
+*/
 /* avoids Value.Call on fast path */
 
+func NewWorker(mapCallback func(obj stream.Object, out Outputer), typename string) *EfficientWorker {
+	return &EfficientWorker{MapCallback: mapCallback, typename: typename}
+}
+
 type EfficientWorker struct {
-	outCh              chan stream.Object
-	callback           func(obj stream.Object, out Outputer)
-	closeCallback      func()
-	finalItemsCallback func(out chan stream.Object) (n int)
-	typename           string
+	MapCallback   func(obj stream.Object, out Outputer)
+	CloseCallback func(out Outputer) //on soft close, can output some final stuff
+	StopCallback  func()             //on hard close only
+	ExitCallback  func()             //on soft or hard close
+	outCh         chan stream.Object
+	typename      string
 }
 
 func (w *EfficientWorker) Start(out chan stream.Object) {
 	w.outCh = out
 }
 
-func (w *EfficientWorker) Close() int {
-	if w.closeCallback != nil {
-		w.closeCallback()
-		return 0
+func (w *EfficientWorker) Close(out Outputer) {
+	if w.CloseCallback != nil {
+		w.CloseCallback(out)
 	}
-	if w.finalItemsCallback != nil {
-		return w.finalItemsCallback(w.outCh)
+}
+
+func (w *EfficientWorker) Stop() {
+	if w.StopCallback != nil {
+		w.StopCallback()
 	}
-	return 0
+}
+
+func (w *EfficientWorker) Exit() {
+	if w.ExitCallback != nil {
+		w.ExitCallback()
+	}
 }
 
 func (w *EfficientWorker) Map(input stream.Object, out Outputer) {
-	w.callback(input, out)
+	w.MapCallback(input, out)
 }
 
 func (w *EfficientWorker) Validate(inCh chan stream.Object, typeName string) bool {

@@ -9,15 +9,13 @@ import (
 )
 
 /* Example Decoder Usage
-decGenFn := func () interface{} {
-	decoder := encoding.ProtobufGeneralDecoder()
-	return func(in []byte) []<protobuf object> {
-		var i <protobuf object>
-		decoder(in, &i)
-		return []<protobuf object>{i}
-	}
+decFn := func (in []byte, decoder func([]byte, proto.Message) ) stream.Object{
+	var i <protobuf object>
+	decoder(in, &i)
+	return i
 }
-decOp := encoding.NewProtobufDecodeRop(decGenFn)
+
+intDecOp := encoding.NewProtobufDecodeOp(decFn)
 */
 
 func ProtobufGeneralDecoder() func([]byte, proto.Message) {
@@ -30,12 +28,22 @@ func ProtobufGeneralDecoder() func([]byte, proto.Message) {
 	return fn
 }
 
-func NewProtobufDecodeOp(gen interface{}) stream.Operator { //if outch is chan X, gen should be func() (func([]byte, chan<-bool) []X)
-	return mapper.NewOpFactory(gen, "ProtobufDecodeOp")
+func NewProtobufDecodeOp(decFn func([]byte, func([]byte, proto.Message)) stream.Object) stream.InOutOperator {
+	name := "ProtobufDecodeOp"
+	workerCreator := func() mapper.Worker {
+		decoder := ProtobufGeneralDecoder()
+		fn := func(obj stream.Object, out mapper.Outputer) {
+			decoded := decFn(obj.([]byte), decoder)
+			out.Out(1) <- decoded
+		}
+		return mapper.NewWorker(fn, name)
+	}
+	return mapper.NewClosureOp(workerCreator, nil, name)
 }
 
 func NewProtobufEncodeOp() stream.Operator {
-	generator := func() interface{} {
+	name := "ProtobufEncodeOp"
+	workerCreator := func() mapper.Worker {
 		fn := func(obj stream.Object, outputer mapper.Outputer) {
 			in := obj.(proto.Message)
 			out, err := proto.Marshal(in)
@@ -44,16 +52,17 @@ func NewProtobufEncodeOp() stream.Operator {
 			}
 			outputer.Out(1) <- out
 		}
-		return fn
+		return mapper.NewWorker(fn, name)
 	}
 
-	return mapper.NewOpFactory(generator, "NewProtobufEncodeOp")
+	return mapper.NewClosureOp(workerCreator, nil, name)
 }
 
+/*
 func NewMakeProtobufMessageOp() stream.Operator {
 	fn := func(in interface{}) []proto.Message {
 		return []proto.Message{in.(proto.Message)}
 	}
 
 	return mapper.NewOp(fn, "MakeProtobufMessageOp")
-}
+}*/

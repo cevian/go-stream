@@ -9,15 +9,13 @@ import (
 )
 
 /* Example Decoder Usage
-intDecGenFn := func () interface{} {
-	decoder := encoding.JsonGeneralDecoder()
-	return func(in []byte, closenotifier chan<- bool) []int {
-		var i int
-		decoder(in, &i)
-		return []int{i}
-	}
+decFn := func (in []byte, decoder func([]byte, interface{}) ) stream.Object{
+	var i int
+	decoder(in, &i)
+	return i
 }
-intDecOp := encoding.NewJsonDecodeRop(intDecGenFn)
+
+intDecOp := encoding.NewJsonDecodeOp(decFn)
 */
 
 func JsonGeneralDecoder() func([]byte, interface{}) {
@@ -37,21 +35,31 @@ func JsonGeneralEncoder() func(interface{}) ([]byte, error) {
 	return fn
 }
 
-func NewJsonDecodeRop(gen interface{}) stream.Operator { //if outch is chan X, gen should be func() (func([]byte, chan<-bool) []X)
-	return mapper.NewOpFactory(gen, "JsonDecodeRop")
+func NewJsonDecodeOp(decFn func([]byte, func([]byte, interface{})) stream.Object) stream.InOutOperator {
+	name := "JsonDecodeOp"
+	workerCreator := func() mapper.Worker {
+		decoder := JsonGeneralDecoder()
+		fn := func(obj stream.Object, out mapper.Outputer) {
+			decoded := decFn(obj.([]byte), decoder)
+			out.Out(1) <- decoded
+		}
+		return mapper.NewWorker(fn, name)
+	}
+	return mapper.NewClosureOp(workerCreator, nil, name)
 }
 
-func NewJsonEncodeRop() stream.Operator {
-	generator := func() interface{} {
-		fn := func(in interface{}) [][]byte {
-			out, err := json.Marshal(in)
+func NewJsonEncodeOp() stream.Operator {
+	name := "JsonEncodeOp"
+	workerCreator := func() mapper.Worker {
+		fn := func(obj stream.Object, out mapper.Outputer) {
+			res, err := json.Marshal(obj.([]byte))
 			if err != nil {
-				slog.Errorf("Error marshaling json %v\t%+v", err, in)
+				slog.Errorf("Error marshaling json %v\t%+v", err, obj)
 			}
-			return [][]byte{out}
+			out.Out(1) <- res
 		}
-		return fn
+		return mapper.NewWorker(fn, name)
 	}
 
-	return mapper.NewOpFactory(generator, "NewJsonEncodeRop")
+	return mapper.NewClosureOp(workerCreator, nil, name)
 }

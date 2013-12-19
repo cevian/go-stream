@@ -11,15 +11,22 @@ import (
 )
 
 /* Example Decoder Usage
-intDecGenFn := func () interface{} {
-	decoder := encoding.GobGeneralDecoder()
-	return func(in []byte, closenotifier chan<- bool) []int {
-		var i int
-		decoder(in, &i)
-		return []int{i}
-	}
+//intDecGenFn := func (obj stream.Object, out mapper.Outputter) {
+//	decoder := encoding.GobGeneralDecoder()
+//	return func(obj stream.Object, out mapper.Outputter) {
+//		var i int
+//		decoder(obj.([]byte), &i)
+//		out.Out(1) <- i
+//	}
+//}
+
+decFn := func (in []byte, decoder func([]byte, interface{}) ) stream.Object{
+	var i int
+	decoder(in, &i)
+	return i
 }
-intDecOp := encoding.NewGobDecodeRop(intDecGenFn)
+
+intDecOp := encoding.NewGobDecodeOp(decFn)
 */
 
 func GobGeneralDecoder() func([]byte, interface{}) {
@@ -39,13 +46,21 @@ func GobGeneralDecoder() func([]byte, interface{}) {
 	return fn
 }
 
-func NewGobDecodeRop(gen interface{}) stream.InOutOperator { //if outch is chan X, fun should be func([]byte, chan<-bool) []X
-	op := mapper.NewOpFactory(gen, "GobDecodeRop")
-	//op.Parallel = false
-	return op
+func NewGobDecodeOp(
+	decFn func([]byte, func([]byte, interface{})) stream.Object) stream.InOutOperator {
+	name := "GobDecodeOp"
+	closure := func() mapper.Worker {
+		decoder := GobGeneralDecoder()
+		fn := func(obj stream.Object, out mapper.Outputer) {
+			decoded := decFn(obj.([]byte), decoder)
+			out.Out(1) <- decoded
+		}
+		return mapper.NewWorker(fn, name)
+	}
+	return mapper.NewClosureOp(closure, nil, name)
 }
 
-func NewGobEncodeRop() stream.InOutOperator {
+func NewGobEncodeOp() stream.InOutOperator {
 	/* Each encoder provides a stateful stream. So we have to choices:
 	   Either run this operator not in parallel and get  a stateful stream
 	   Or run this in parallel but use a new encoder for each input. We
@@ -53,11 +68,12 @@ func NewGobEncodeRop() stream.InOutOperator {
 	   coming out. We will compress each output separately here.
 	*/
 
-	generator := func() interface{} {
+	name := "GobEncodeOp"
+	workerCreator := func() mapper.Worker {
 		var buf bytes.Buffer
-		fn := func(in interface{}) [][]byte {
+		fn := func(obj stream.Object, outputter mapper.Outputer) {
 			enc := gob.NewEncoder(&buf) //each output is an indy stream
-			err := enc.Encode(in)
+			err := enc.Encode(obj)
 			if err != nil {
 				log.Printf("Error marshaling gob: %v\n", err.Error())
 			}
@@ -75,12 +91,12 @@ func NewGobEncodeRop() stream.InOutOperator {
 				}
 			}
 
-			return [][]byte{out}
+			outputter.Out(1) <- out
 		}
-		return fn
+		return mapper.NewWorker(fn, name)
 	}
 
-	op := mapper.NewOpFactory(generator, "NewGobEncodeRop")
+	op := mapper.NewClosureOp(workerCreator, nil, name)
 	//op.Parallel = false
 	return op
 }

@@ -14,8 +14,8 @@ func TestNoOrder(t *testing.T) {
 
 	input := make(chan stream.Object)
 
-	passthruFn := func(in int) []int {
-		return []int{in}
+	passthruFn := func(obj stream.Object, out mapper.Outputer) {
+		out.Out(1) <- obj
 	}
 
 	FirstOp := mapper.NewOp(passthruFn, "First PT no")
@@ -54,8 +54,8 @@ func TestOrder(t *testing.T) {
 
 	input := make(chan stream.Object)
 
-	passthruFn := func(in int) []int {
-		return []int{in}
+	passthruFn := func(obj stream.Object, out mapper.Outputer) {
+		out.Out(1) <- obj
 	}
 
 	FirstOp := mapper.NewOrderedOp(passthruFn, "First PT o")

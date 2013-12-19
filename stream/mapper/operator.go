@@ -4,14 +4,35 @@ import "runtime"
 import "sync"
 import "github.com/cloudflare/go-stream/stream"
 
-func NewOp(proc interface{}, tn string) *Op {
-	gen := CallbackGenerator{callback: proc, typename: tn}
+func NewOp(mapCallback func(obj stream.Object, out Outputer), tn string) *Op {
+	gen := NewGenerator(mapCallback, tn)
+	return NewOpFromGenerator(gen, tn)
+}
+
+func NewOpExitor(mapCallback func(obj stream.Object, out Outputer),
+	exitCallback func(),
+	tn string) *Op {
+	gen := NewGenerator(mapCallback, tn)
+	gen.SingleExitCallback = exitCallback
+	return NewOpFromGenerator(gen, tn)
+}
+
+func NewClosureOp(createWorker func() Worker,
+	singleExitCallback func(),
+	tn string) *Op {
+
+	gen := ClosureGenerator{createWorker, singleExitCallback, tn}
+	return NewOpFromGenerator(&gen, tn)
+}
+
+func NewOpFromGenerator(gen Generator, tn string) *Op {
 	base := stream.NewBaseInOutOp(stream.CHAN_SLACK)
-	op := Op{base, &gen, tn, true}
+	op := Op{base, gen, tn, true}
 	op.Init()
 	return &op
 }
 
+/*
 func NewOpExitor(callback interface{}, exitCallback func(), tn string) *Op {
 	gen := CallbackGenerator{callback: callback, exitCallback: exitCallback, typename: tn}
 	base := stream.NewBaseInOutOp(stream.CHAN_SLACK)
@@ -43,13 +64,13 @@ func NewOpWorkerFinalItemsFactory(proc interface{}, tn string) *Op {
 	op.Init()
 	return &op
 }
-
+*/
 type Closer interface {
 	Close(out Outputer) //happens on worker for soft close only
 }
 
 type Stopper interface {
-	Stop() //happens on hard close
+	Stop() //happens on hard close on worker
 }
 
 type Exitor interface {

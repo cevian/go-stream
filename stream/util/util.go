@@ -11,23 +11,32 @@ func NewDropOp() *mapper.Op {
 	dropfn := func(input stream.Object, out mapper.Outputer) {
 	}
 
-	return mapper.NewOp(dropfn, "DropRop")
+	return mapper.NewOp(dropfn, "DropOp")
 }
 
-func NewMakeInterfaceOp() *mapper.Op {
+func NewPassthruOp() *mapper.Op {
+	fn := func(input stream.Object, out mapper.Outputer) {
+		out.Out(1) <- input
+	}
+
+	return mapper.NewOp(fn, "PassthruOp")
+}
+
+/*func NewMakeInterfaceOp() *mapper.Op {
 	fn := func(in interface{}) []interface{} {
 		return []interface{}{in}
 	}
 
 	return mapper.NewOp(fn, "MakeInterfaceOp")
-}
+}*/
 
 func NewTailDataOp() stream.Operator {
-	gen := func() interface{} {
+	name := "TailDropOp"
+	createWorker := func() mapper.Worker {
 
 		logger := log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
 
-		return func(input stream.Object, outputer mapper.Outputer) {
+		fn := func(input stream.Object, outputer mapper.Outputer) {
 
 			if value, ok := input.([]byte); ok {
 				logger.Printf("%s", string(value))
@@ -39,8 +48,10 @@ func NewTailDataOp() stream.Operator {
 
 			outputer.Out(1) <- input
 		}
+
+		return mapper.NewWorker(fn, name)
 	}
-	op := mapper.NewOpFactory(gen, "TailDataOp")
+	op := mapper.NewClosureOp(createWorker, nil, name)
 	op.Parallel = false
 	return op
 }

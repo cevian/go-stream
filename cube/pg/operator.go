@@ -41,7 +41,10 @@ func NewUpsertOp(dbconnect string, tableName string, cd cube.CubeDescriber) (str
 		log.Println("Db Upser Exit: ")
 	}
 
-	op := mapper.NewOpExitor(f, exit, "DbUpsert")
+	name := "DbUpsert"
+	gen := mapper.NewGenerator(f, name)
+	gen.SingleExitCallback = exit
+	op := mapper.NewOpFromGenerator(gen, name)
 	op.Parallel = false
 	return op, ready, exec
 }

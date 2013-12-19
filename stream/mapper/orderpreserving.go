@@ -6,10 +6,9 @@ import "github.com/cloudflare/go-stream/stream"
 
 import "log"
 
-func NewOrderedOp(proc interface{}, tn string) *OrderPreservingOp {
-	gen := CallbackGenerator{callback: proc}
-	base := stream.NewBaseInOutOp(stream.CHAN_SLACK)
-	mop := &Op{base, &gen, tn, true}
+func NewOrderedOp(mapCallback func(obj stream.Object, out Outputer), tn string) *OrderPreservingOp {
+	gen := NewGenerator(mapCallback, tn)
+	mop := NewOpFromGenerator(gen, tn)
 	return NewOrderedOpWrapper(mop)
 }
 
