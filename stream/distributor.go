@@ -16,9 +16,10 @@ type DistributeOperator struct {
 	*HardStopChannelCloser
 	*BaseIn
 	mapper        func(Object) DistribKey
-	branchCreator func(DistribKey) (DistributorChildOp, bool) //the 2nd returnd tells the distributor whether or not to run the new op
-	outputs       map[DistribKey]chan<- Object
-	runner        *Runner
+	branchCreator func(DistribKey) (DistributorChildOp, bool)
+	//the 2nd returnd tells the distributor whether or not to run the new op
+	outputs map[DistribKey]chan<- Object
+	runner  *Runner
 }
 
 func NewDistributor(mapp func(Object) DistribKey, creator func(DistribKey) (DistributorChildOp, bool)) *DistributeOperator {
