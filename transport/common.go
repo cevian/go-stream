@@ -3,8 +3,8 @@ package transport
 import (
 	"bytes"
 	"encoding/binary"
-	"github.com/cloudflare/go-stream/stream"
-	"github.com/cloudflare/go-stream/util/slog"
+	"github.com/cevian/go-stream/stream"
+	"github.com/cevian/go-stream/util/slog"
 )
 
 type ZmqCommand int

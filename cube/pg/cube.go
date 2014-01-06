@@ -1,6 +1,6 @@
 package pg
 
-import "github.com/cloudflare/go-stream/cube"
+import "github.com/cevian/go-stream/cube"
 import (
 	"log"
 	"reflect"

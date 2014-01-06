@@ -2,8 +2,8 @@ package metrics
 
 import (
 	json "encoding/json"
-	"github.com/cloudflare/go-stream/util"
-	"github.com/cloudflare/go-stream/util/slog"
+	"github.com/cevian/go-stream/util"
+	"github.com/cevian/go-stream/util/slog"
 	zmq "github.com/pebbe/zmq3"
 	metrics "github.com/rcrowley/go-metrics"
 	"time"

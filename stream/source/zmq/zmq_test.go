@@ -1,11 +1,11 @@
 package zmq
 
 import "testing"
-import "github.com/cloudflare/go-stream/stream"
+import "github.com/cevian/go-stream/stream"
 import "fmt"
 import "sync"
 
-import sink_zmq "github.com/cloudflare/go-stream/stream/sink/zmq"
+import sink_zmq "github.com/cevian/go-stream/stream/sink/zmq"
 
 func TestZmqget(t *testing.T) {
 

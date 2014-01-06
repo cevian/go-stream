@@ -3,8 +3,8 @@ package encoding
 import (
 	"bytes"
 	"encoding/gob"
-	"github.com/cloudflare/go-stream/stream"
-	"github.com/cloudflare/go-stream/stream/mapper"
+	"github.com/cevian/go-stream/stream"
+	"github.com/cevian/go-stream/stream/mapper"
 	"io"
 	"log"
 	//"reflect"

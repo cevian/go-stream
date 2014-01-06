@@ -2,7 +2,7 @@ package stream
 
 import (
 	"errors"
-	"github.com/cloudflare/go-stream/util/slog"
+	"github.com/cevian/go-stream/util/slog"
 )
 
 type fanoutChildOp interface {

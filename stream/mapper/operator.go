@@ -2,7 +2,7 @@ package mapper
 
 import "runtime"
 import "sync"
-import "github.com/cloudflare/go-stream/stream"
+import "github.com/cevian/go-stream/stream"
 
 func NewOp(mapCallback func(obj stream.Object, out Outputer), tn string) *Op {
 	gen := NewGenerator(mapCallback, tn)

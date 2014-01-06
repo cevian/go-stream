@@ -1,6 +1,6 @@
 package sink
 
-import "github.com/cloudflare/go-stream/stream"
+import "github.com/cevian/go-stream/stream"
 
 type InterfaceWriter interface {
 	Write(i interface{}) error

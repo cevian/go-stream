@@ -6,8 +6,8 @@ import (
 )
 
 import (
-	"github.com/cloudflare/go-stream/stream"
-	"github.com/cloudflare/go-stream/stream/mapper"
+	"github.com/cevian/go-stream/stream"
+	"github.com/cevian/go-stream/stream/mapper"
 )
 
 func TestNoOrder(t *testing.T) {

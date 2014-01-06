@@ -1,6 +1,6 @@
 package source
 
-import "github.com/cloudflare/go-stream/stream"
+import "github.com/cevian/go-stream/stream"
 
 type Sourcer interface {
 	stream.Operator

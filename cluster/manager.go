@@ -2,7 +2,7 @@ package cluster
 
 import (
 	"encoding/json"
-	"github.com/cloudflare/go-stream/util/slog"
+	"github.com/cevian/go-stream/util/slog"
 	"io/ioutil"
 	"net/http"
 	"strconv"

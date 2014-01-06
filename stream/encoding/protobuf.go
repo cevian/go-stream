@@ -2,8 +2,8 @@ package encoding
 
 import (
 	"code.google.com/p/goprotobuf/proto"
-	"github.com/cloudflare/go-stream/stream"
-	"github.com/cloudflare/go-stream/stream/mapper"
+	"github.com/cevian/go-stream/stream"
+	"github.com/cevian/go-stream/stream/mapper"
 	"log"
 	//"reflect"
 )

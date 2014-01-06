@@ -4,8 +4,8 @@ import (
 	"log"
 )
 
-import "github.com/cloudflare/go-stream/stream/sink"
-import "github.com/cloudflare/go-stream/stream"
+import "github.com/cevian/go-stream/stream/sink"
+import "github.com/cevian/go-stream/stream"
 
 import zmqapi "github.com/pebbe/zmq3"
 

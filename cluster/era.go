@@ -1,7 +1,7 @@
 package cluster
 
 import (
-	"github.com/cloudflare/go-stream/util/slog"
+	"github.com/cevian/go-stream/util/slog"
 )
 
 type Era interface {

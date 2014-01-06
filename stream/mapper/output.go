@@ -1,6 +1,6 @@
 package mapper
 
-import "github.com/cloudflare/go-stream/stream"
+import "github.com/cevian/go-stream/stream"
 
 type Outputer interface {
 	Out(int) chan<- stream.Object

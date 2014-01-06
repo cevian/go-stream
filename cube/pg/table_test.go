@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
-	"github.com/cloudflare/go-stream/cube"
+	"github.com/cevian/go-stream/cube"
 	"log"
 	"time"
 

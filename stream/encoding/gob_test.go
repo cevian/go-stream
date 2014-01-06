@@ -6,7 +6,7 @@ import (
 )
 
 import (
-	"github.com/cloudflare/go-stream/stream"
+	"github.com/cevian/go-stream/stream"
 )
 
 /*import (
@@ -17,7 +17,7 @@ import (
 
 //import "log"
 
-//import "github.com/cloudflare/go-stream/stream/encoding"
+//import "github.com/cevian/go-stream/stream/encoding"
 
 func TestGob(t *testing.T) {
 	input := make(chan stream.Object)

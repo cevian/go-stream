@@ -1,7 +1,7 @@
 package sink
 
 import (
-	"github.com/cloudflare/go-stream/stream"
+	"github.com/cevian/go-stream/stream"
 )
 
 type Sinker interface {

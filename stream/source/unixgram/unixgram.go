@@ -3,8 +3,8 @@ package unixgram
 import (
 	"bytes"
 	"encoding/hex"
-	"github.com/cloudflare/go-stream/stream"
-	"github.com/cloudflare/go-stream/util/slog"
+	"github.com/cevian/go-stream/stream"
+	"github.com/cevian/go-stream/util/slog"
 	"net"
 	"os"
 	"syscall"

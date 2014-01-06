@@ -1,7 +1,7 @@
 package cube
 
 import (
-	"github.com/cloudflare/go-stream/cube/pg/hll"
+	"github.com/cevian/go-stream/cube/pg/hll"
 	"time"
 )
 

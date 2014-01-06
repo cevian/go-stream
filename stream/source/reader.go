@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"encoding/binary"
 	//"errors"
-	"github.com/cloudflare/go-stream/stream"
-	"github.com/cloudflare/go-stream/util/slog"
+	"github.com/cevian/go-stream/stream"
+	"github.com/cevian/go-stream/util/slog"
 	"io"
 	"math"
 )

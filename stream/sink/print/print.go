@@ -1,8 +1,8 @@
 package print
 
 import (
-	"github.com/cloudflare/go-stream/stream"
-	"github.com/cloudflare/go-stream/stream/sink"
+	"github.com/cevian/go-stream/stream"
+	"github.com/cevian/go-stream/stream/sink"
 	"log"
 	"os"
 )
