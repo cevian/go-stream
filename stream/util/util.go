@@ -22,14 +22,6 @@ func NewPassthruOp() *mapper.Op {
 	return mapper.NewOp(fn, "PassthruOp")
 }
 
-/*func NewMakeInterfaceOp() *mapper.Op {
-	fn := func(in interface{}) []interface{} {
-		return []interface{}{in}
-	}
-
-	return mapper.NewOp(fn, "MakeInterfaceOp")
-}*/
-
 func NewTailDataOp() stream.Operator {
 	name := "TailDropOp"
 	createWorker := func() mapper.Worker {

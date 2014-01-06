@@ -32,39 +32,6 @@ func NewOpFromGenerator(gen Generator, tn string) *Op {
 	return &op
 }
 
-/*
-func NewOpExitor(callback interface{}, exitCallback func(), tn string) *Op {
-	gen := CallbackGenerator{callback: callback, exitCallback: exitCallback, typename: tn}
-	base := stream.NewBaseInOutOp(stream.CHAN_SLACK)
-	op := Op{base, &gen, tn, true}
-	op.Init()
-	return &op
-}
-
-func NewOpFactory(proc interface{}, tn string) *Op {
-	gen := WorkerFactoryGenerator{proc}
-	base := stream.NewBaseInOutOp(stream.CHAN_SLACK)
-	op := Op{base, &gen, tn, true}
-	op.Init()
-	return &op
-}
-
-func NewOpWorkerCloserFactory(proc interface{}, tn string) *Op {
-	gen := WorkerCloserFactoryGenerator{proc}
-	base := stream.NewBaseInOutOp(stream.CHAN_SLACK)
-	op := Op{base, &gen, tn, true}
-	op.Init()
-	return &op
-}
-
-func NewOpWorkerFinalItemsFactory(proc interface{}, tn string) *Op {
-	gen := WorkerFinalItemsFactoryGenerator{proc}
-	base := stream.NewBaseInOutOp(stream.CHAN_SLACK)
-	op := Op{base, &gen, tn, true}
-	op.Init()
-	return &op
-}
-*/
 type Closer interface {
 	Close(out Outputer) //happens on worker for soft close only
 }
