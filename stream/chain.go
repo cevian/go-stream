@@ -10,11 +10,9 @@ type Chain interface {
 	Stop() error
 	Add(o Operator) Chain
 	SetName(string) Chain
-
 	//NewSubChain creates a new empty chain inheriting the properties of the parent chain
 	//Usefull for distribute/fanout building functions
 	NewSubChain() Chain
-
 	//async functions
 	Start() error
 	Wait() error
