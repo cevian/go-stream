@@ -6,16 +6,17 @@ import (
 )
 
 type Runner struct {
-	ops           []Operator
-	closenotifier chan bool
-	errors        chan error
-	wg            *sync.WaitGroup
-	errorcloser   sync.Once
-	finished      bool
+	ops                []Operator
+	closenotifier      chan bool
+	closenotifiermutex sync.Mutex
+	errors             chan error
+	wg                 *sync.WaitGroup
+	errorcloser        sync.Once
+	finished           bool
 }
 
 func NewRunner() *Runner {
-	return &Runner{make([]Operator, 0, 2), make(chan bool), make(chan error, 1), &sync.WaitGroup{}, sync.Once{}, false}
+	return &Runner{make([]Operator, 0, 2), make(chan bool), sync.Mutex{}, make(chan error, 1), &sync.WaitGroup{}, sync.Once{}, false}
 }
 
 func (r *Runner) WaitGroup() *sync.WaitGroup {
@@ -68,11 +69,13 @@ func (r *Runner) AsyncRun(op Operator, startCloser bool) {
 			}
 		}
 		//on first exit, the cn channel is closed
+		r.closenotifiermutex.Lock()
 		select {
 		case <-r.closenotifier: //if already closed no-op
 		default:
 			close(r.closenotifier)
 		}
+		r.closenotifiermutex.Unlock()
 	}()
 }
 
