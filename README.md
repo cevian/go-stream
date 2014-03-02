@@ -4,6 +4,7 @@ go-stream
 This library is a framework for stream processing analysis. It is meant to be used as a library for go programs
 that need to do stream processing of large volumes of data.
 
+
 It is made up of a graph connecting a source to 1 or more operators, terminating at a sink. 
 Operators pass data from one to another with go channels. An example graph to encode objects to snappy is:
 
