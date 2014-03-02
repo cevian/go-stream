@@ -38,6 +38,9 @@ Distributor takes input and puts it onto 1 of N chains according to a mapping fu
 
 Chains can be ordered or unordered. Ordered chains preserve the order of tuples from input to output 
 (although the operators still use parallelism).  
+Installing:
+
+	go get "github.com/cevian/go-stream/stream
 
 Compiling:
 	go build
