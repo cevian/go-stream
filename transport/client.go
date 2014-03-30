@@ -7,7 +7,7 @@ import (
 	"github.com/cevian/go-stream/stream/sink"
 	"github.com/cevian/go-stream/stream/source"
 	"github.com/cevian/go-stream/util"
-	"github.com/cevian/go-stream/util/metrics"
+	//"github.com/cevian/go-stream/util/metrics"
 	"github.com/cevian/go-stream/util/slog"
 	"net"
 	"sync"
@@ -73,10 +73,10 @@ func (src *Client) Run() error {
 		src.running = false
 	}()
 
-	metrics.Gm.Register(stream.Name(src))
+	//metrics.Gm.Register(stream.Name(src))
 	go func(op string, s *Client) { // Update the queue depth on input for each phase
 		for {
-			metrics.Gm.Update(&op, s.GetInDepth())
+			//metrics.Gm.Update(&op, s.GetInDepth())
 			time.Sleep(1 * time.Second)
 		}
 	}(stream.Name(src), src)
@@ -173,7 +173,7 @@ func (src *Client) connect() error {
 	closing := false
 
 	//defer log.Println("Exiting client loop")
-	opName := stream.Name(src)
+	//opName := stream.Name(src)
 	writesNotCompleted := uint(0)
 	for {
 		upstreamCh := src.In()
@@ -200,7 +200,7 @@ func (src *Client) connect() error {
 				}
 				sendData(sndChData, bytes, seq)
 				writesNotCompleted += 1
-				metrics.Gm.Event(&opName) // These are batched
+				//metrics.Gm.Event(&opName) // These are batched
 				//slog.Logf(logger.Levels.Debug, "Sent batch -- length %d seq %d", len(bytes), seq)
 			}
 		case cnt := <-writeNotifier.NotificationChannel():

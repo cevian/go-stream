@@ -4,7 +4,7 @@ import (
 	"github.com/cevian/go-stream/stream"
 	"github.com/cevian/go-stream/stream/sink"
 	"github.com/cevian/go-stream/stream/source"
-	"github.com/cevian/go-stream/util/metrics"
+	//"github.com/cevian/go-stream/util/metrics"
 	"github.com/cevian/go-stream/util/slog"
 	"net"
 	"sync"
@@ -73,7 +73,7 @@ func (src Server) Run() error {
 		hardCloseListener(src.StopNotifier, scl, ln)
 	}()
 
-	metrics.Gm.Register(stream.Name(src))
+	//metrics.Gm.Register(stream.Name(src))
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -122,7 +122,7 @@ func (src Server) handleConnection(conn net.Conn) {
 	wg_sub := &sync.WaitGroup{}
 	defer wg_sub.Wait()
 
-	opName := stream.Name(src)
+	//opName := stream.Name(src)
 	sndChData := make(chan stream.Object, 100)
 	sndChCloseNotifier := make(chan bool, 1)
 	defer close(sndChData)
@@ -170,7 +170,7 @@ func (src Server) handleConnection(conn net.Conn) {
 				return
 			}
 			command, seq, payload, err := parseMsg(obj.([]byte))
-			metrics.Gm.Event(&opName)
+			//metrics.Gm.Event(&opName)
 
 			if err == nil {
 				if command == DATA {

@@ -30,10 +30,13 @@ func NewUpsertOp(dbconnect string, tableName string, cd cube.CubeDescriber) (str
 
 	f := func(input stream.Object, out mapper.Outputer) {
 		in := input.(*cube.TimeRepartitionedCube)
+		// wrap with transactions
 		visitor := func(part cube.Partition, c cube.Cuber) {
 			exec.UpsertCube(part, c)
 		}
 		in.VisitPartitions(visitor)
+		//update here
+		//commit
 		ready.Notify(1)
 	}
 

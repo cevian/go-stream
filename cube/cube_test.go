@@ -1,6 +1,7 @@
 package cube
 
 import (
+	"fmt"
 	"testing"
 )
 

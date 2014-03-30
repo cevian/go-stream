@@ -52,6 +52,7 @@ func (op *BatcherOperator) Flush() {
 	if op.container.Flush(op.Out()) {
 		op.outstanding += 1
 	}
+	slog.Debugf("Flushing :)")
 }
 
 func (op *BatcherOperator) LastFlush() {

@@ -23,7 +23,11 @@ type CubeDescriber interface {
 	GetDimensions() Dimensions
 	GetAggregates() Aggregates
 }
-
+type SourceVector struct {
+	SourceID          uint64
+	SourceDescription string
+	Offset            uint32
+}
 type Cube struct {
 	Dimensions Dimensions
 	Aggregates Aggregates
@@ -52,6 +56,7 @@ func NewCube(dimensions Dimensions, aggregates Aggregates) *Cube {
 	validateDimensions(dimensions)
 	validateAggregates(aggregates)
 	st := make(map[Dimensions]Aggregates)
+
 	return &Cube{dimensions, aggregates, st}
 }
 

@@ -12,6 +12,22 @@ type TimePartitionedCubeContainer struct {
 	batchGranularity  time.Duration
 	outputGranularity time.Duration
 }
+type FTTimePartitionedCubeContainer struct {
+	ftparse func(stream.Object) (source_vector SourceVector)
+	TimePartitionedCubeContainer
+}
+
+func (cont *FTTimePartitionedCubeContainer) Add(obj stream.Object) {
+
+	d, a := cont.parse(obj)
+
+	cont.cube.Insert(d, a)
+
+	source_vector := cont.ftparse(obj)
+
+	cont.cube.SourceVector = source_vector
+
+}
 
 func (cont *TimePartitionedCubeContainer) Flush(outch chan<- stream.Object) bool {
 	out := NewTimeRepartitionedCube(cont.batchGranularity, cont.outputGranularity)
@@ -23,6 +39,7 @@ func (cont *TimePartitionedCubeContainer) Flush(outch chan<- stream.Object) bool
 
 func (cont *TimePartitionedCubeContainer) Add(obj stream.Object) {
 	d, a := cont.parse(obj)
+
 	cont.cube.Insert(d, a)
 }
 
@@ -40,5 +57,15 @@ func NewPgBatchOperator(parse func(stream.Object) (Dimensions, Aggregates),
 	outGran := time.Hour
 	cont := &TimePartitionedCubeContainer{NewTimePartitionedCube(batchGran), parse, batchGran, outGran}
 	return stream.NewBatchOperator("PgBatchOp", cont, downstreamProcessed)
+
+}
+func NewFTBatchOperator(parse func(stream.Object) (Dimensions, Aggregates),
+	ftparse func(stream.Object) (source_vector SourceVector),
+	downstreamProcessed stream.ProcessedNotifier) stream.Operator {
+	batchGran := time.Second
+	outGran := time.Hour
+	con := TimePartitionedCubeContainer{NewTimePartitionedCube(batchGran), parse, batchGran, outGran}
+	cont := &FTTimePartitionedCubeContainer{ftparse, con}
+	return stream.NewBatchOperator("FTBatchOp", cont, downstreamProcessed)
 
 }

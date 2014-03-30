@@ -1,5 +1,9 @@
 package stream
 
+import (
+	"github.com/cevian/go-stream/util/slog"
+)
+
 type RunningCount struct {
 	cnts []int
 }
@@ -48,6 +52,7 @@ func NewInterfaceContainer() *InterfaceContainer {
 func (c *InterfaceContainer) Flush(out chan<- Object) bool {
 	if len(c.store) > 0 {
 		out <- c.store
+		slog.Debugf("Flush %v", c.store)
 		cnt := len(c.store)
 		c.runningCount.Add(cnt)
 		c.store = make([]interface{}, 0, c.runningCount.GetAverageMin(2))
@@ -65,6 +70,7 @@ func (c *InterfaceContainer) HasItems() bool {
 }
 
 func (c *InterfaceContainer) Add(obj Object) {
+
 	if cap(c.store) <= len(c.store) {
 		news := make([]interface{}, len(c.store), 2*cap(c.store))
 		copy(news, c.store)

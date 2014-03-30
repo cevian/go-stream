@@ -5,6 +5,14 @@ This library is a framework for stream processing analysis. It is meant to be us
 that need to do stream processing of large volumes of data.
 
 
+Installing:
+
+	install hg, zeromq
+
+	go get -u -t "github.com/cevian/go-stream/stream"
+
+
+
 It is made up of a graph connecting a source to 1 or more operators, terminating at a sink. 
 Operators pass data from one to another with go channels. An example graph to encode objects to snappy is:
 
@@ -39,12 +47,10 @@ Distributor takes input and puts it onto 1 of N chains according to a mapping fu
 
 Chains can be ordered or unordered. Ordered chains preserve the order of tuples from input to output 
 (although the operators still use parallelism).  
-Installing:
 
-	go get "github.com/cevian/go-stream/stream
 
 Compiling:
-	go build
+	go build github.com/cevian/go-stream/stream/...
 	
 Testing:
-	go test
+	go test -v github.com/cevian/go-stream/stream/...

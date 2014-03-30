@@ -128,6 +128,7 @@ type TimePartitionedCube struct {
 	*PartitionedCube
 	dur              time.Duration
 	flushCuttoffTime time.Time
+	SourceVector     SourceVector
 }
 
 func timePartitioner(td time.Duration) func(Dimensions) Partition {
@@ -139,8 +140,8 @@ func timePartitioner(td time.Duration) func(Dimensions) Partition {
 
 func NewTimePartitionedCube(td time.Duration) *TimePartitionedCube {
 	partitioner := timePartitioner(td)
-
-	return &TimePartitionedCube{NewPartitionedCube(partitioner), td, time.Unix(0, 0)}
+	s := SourceVector{1, "", 0}
+	return &TimePartitionedCube{NewPartitionedCube(partitioner), td, time.Unix(0, 0), s}
 }
 
 func (c *TimePartitionedCube) Insert(dimensions Dimensions, aggregates Aggregates) {
