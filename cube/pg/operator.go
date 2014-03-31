@@ -9,7 +9,8 @@ import (
 	"log"
 )
 
-func NewUpsertOp(dbconnect string, tableName string, cd cube.CubeDescriber) (stream.Operator, stream.ProcessedNotifier, *Executor) {
+func NewUpsertOp(dbconnect string, tableName string, cd cube.CubeDescriber) 
+	(stream.Operator, stream.ProcessedNotifier, *Executor) {
 	db, err := sql.Open("postgres", dbconnect)
 	if err != nil {
 		log.Fatal(err)

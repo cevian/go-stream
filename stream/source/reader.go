@@ -150,9 +150,9 @@ type FTData struct {
 func (src *FTNextReaderSource) Run() error {
 
 	defer src.CloseOutput()
-	var count uint32
+	var count, off uint32
 	//here's where the recovery protocol comes in
-	count = 0
+	off, count = 0, 0
 	slog.Debugf("Reading up to %d %s", src.MaxItems, " tuples")
 	for {
 		b, eofReached, err := src.readnexter.ReadNext()
@@ -169,9 +169,10 @@ func (src *FTNextReaderSource) Run() error {
 			return err
 		} else if len(b) > 0 {
 			count++
+			off += count * uint32(len(b))
 
 			//fmt.Println("Count in Run", count)
-			src.Out() <- FTData{Data: b, Offset: count * uint32(len(b)), SourceID: src.SourceID, SourceDescription: src.SourceDescription}
+			src.Out() <- FTData{Data: b, Offset: off, SourceID: src.SourceID, SourceDescription: src.SourceDescription}
 
 		}
 		if eofReached || (count >= src.MaxItems) {

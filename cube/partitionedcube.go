@@ -124,12 +124,22 @@ func (tp *TimePartition) Duration() time.Duration {
 	return tp.td
 }
 
+type SourceIdentity struct {
+	Description string
+	ID          uint32
+}
+
 type TimePartitionedCube struct {
 	*PartitionedCube
 	dur              time.Duration
 	flushCuttoffTime time.Time
-	SourceVector     SourceVector
+	Sourcemap        map[SourceIdentity]uint32
 }
+
+/*type FTTimePartionedCube struct {
+	TimePartitionedCube
+	Sourcemap map[string]uint32
+}*/
 
 func timePartitioner(td time.Duration) func(Dimensions) Partition {
 	return func(d Dimensions) Partition {
@@ -140,8 +150,26 @@ func timePartitioner(td time.Duration) func(Dimensions) Partition {
 
 func NewTimePartitionedCube(td time.Duration) *TimePartitionedCube {
 	partitioner := timePartitioner(td)
-	s := SourceVector{1, "", 0}
+	s := make(map[SourceIdentity]uint32)
 	return &TimePartitionedCube{NewPartitionedCube(partitioner), td, time.Unix(0, 0), s}
+}
+
+func (c *TimePartitionedCube) UpdateSourceMap(source_identity SourceIdentity, offset uint32) {
+
+	o, ok := c.Sourcemap[source_identity]
+
+	if !ok {
+		c.Sourcemap[source_identity] = offset
+	} else {
+		if offset > o {
+			c.Sourcemap[source_identity] = offset
+		} else {
+			//handle a bad data case
+
+			panic("Some data is being replayed")
+
+		}
+	}
 }
 
 func (c *TimePartitionedCube) Insert(dimensions Dimensions, aggregates Aggregates) {

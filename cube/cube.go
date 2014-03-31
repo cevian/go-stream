@@ -23,11 +23,7 @@ type CubeDescriber interface {
 	GetDimensions() Dimensions
 	GetAggregates() Aggregates
 }
-type SourceVector struct {
-	SourceID          uint64
-	SourceDescription string
-	Offset            uint32
-}
+
 type Cube struct {
 	Dimensions Dimensions
 	Aggregates Aggregates

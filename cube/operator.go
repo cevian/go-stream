@@ -12,8 +12,10 @@ type TimePartitionedCubeContainer struct {
 	batchGranularity  time.Duration
 	outputGranularity time.Duration
 }
+
 type FTTimePartitionedCubeContainer struct {
-	ftparse func(stream.Object) (source_vector SourceVector)
+	//cube    *FTTimePartionedCube
+	ftparse func(stream.Object) (source_identity SourceIdentity, offset uint32)
 	TimePartitionedCubeContainer
 }
 
@@ -22,10 +24,11 @@ func (cont *FTTimePartitionedCubeContainer) Add(obj stream.Object) {
 	d, a := cont.parse(obj)
 
 	cont.cube.Insert(d, a)
+	//uodate smap
 
-	source_vector := cont.ftparse(obj)
+	si, off := cont.ftparse(obj)
 
-	cont.cube.SourceVector = source_vector
+	cont.cube.UpdateSourceMap(si, off)
 
 }
 
@@ -60,7 +63,7 @@ func NewPgBatchOperator(parse func(stream.Object) (Dimensions, Aggregates),
 
 }
 func NewFTBatchOperator(parse func(stream.Object) (Dimensions, Aggregates),
-	ftparse func(stream.Object) (source_vector SourceVector),
+	ftparse func(stream.Object) (source_identity SourceIdentity, offset uint32),
 	downstreamProcessed stream.ProcessedNotifier) stream.Operator {
 	batchGran := time.Second
 	outGran := time.Hour
