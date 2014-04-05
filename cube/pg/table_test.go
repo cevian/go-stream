@@ -12,7 +12,7 @@ import (
 )
 
 func getConnParams() string {
-	return "user=test dbname=test password=test"
+	return "user=sgichohi dbname=FT password= sslmode=disable"
 
 }
 
@@ -143,12 +143,12 @@ func TestInsertToDb(t *testing.T) {
 	InsertTestCube(c, time.Date(2009, time.November, 10, 23, 1, 0, 0, time.UTC), 1, 1, 2)
 	InsertTestCube(c, time.Date(2009, time.November, 10, 23, 2, 0, 0, time.UTC), 1, 1, 2)
 
-	part := cube.NewTimePartition(start, time.Hour)
-
+	//part := cube.NewTimePartition(start, time.Hour)
+	part := cube.NewTimePartition(start.Truncate(time.Second), time.Hour)
 	exec.CreateBaseTable()
 	exec.DropPartition(part)
 	exec.UpsertCube(part, c)
-
+	fmt.Println("First Upsert")
 	checkTable(table, 1, 2, start, t)
 	exec.UpsertCube(part, c)
 	checkTable(table, 2, 4, start, t)

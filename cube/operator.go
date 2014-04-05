@@ -32,10 +32,27 @@ func (cont *FTTimePartitionedCubeContainer) Add(obj stream.Object) {
 
 }
 
+type FT_Flush struct {
+	Cont      *TimeRepartitionedCube
+	SourceMap map[SourceIdentity]uint32
+}
+
 func (cont *TimePartitionedCubeContainer) Flush(outch chan<- stream.Object) bool {
 	out := NewTimeRepartitionedCube(cont.batchGranularity, cont.outputGranularity)
 	out.Add(cont.cube)
+
 	outch <- out
+
+	cont.cube = NewTimePartitionedCube(cont.batchGranularity)
+	return true
+}
+
+func (cont *FTTimePartitionedCubeContainer) Flush(outch chan<- stream.Object) bool {
+	out := NewTimeRepartitionedCube(cont.batchGranularity, cont.outputGranularity)
+	out.Add(cont.cube)
+
+	outch <- FT_Flush{out, cont.cube.Sourcemap}
+
 	cont.cube = NewTimePartitionedCube(cont.batchGranularity)
 	return true
 }

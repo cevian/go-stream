@@ -2,9 +2,9 @@ package pg
 
 import (
 	"database/sql/driver"
-	"github.com/cevian/pq"
 	"github.com/cevian/go-stream/cube"
 	"github.com/cevian/go-stream/util/slog"
+	"github.com/cevian/pq"
 	"reflect"
 )
 
@@ -78,13 +78,28 @@ func (e *Executor) DropPartition(p cube.Partition) {
 }
 
 func (e *Executor) UpsertCube(p cube.Partition, c cube.Cuber) {
-	e.UpsertCubes(p, []cube.Cuber{c})
+	e.UpsertCubes(p, []cube.Cuber{c}, true)
 }
 
-func (e *Executor) UpsertCubes(p cube.Partition, c []cube.Cuber) {
-	tx, err := e.conn.Begin()
-	if err != nil {
-		slog.Fatalf("Error starting transaction %v", err)
+func (e *Executor) FTUpsertCube(p cube.Partition, c cube.Cuber) {
+	e.UpsertCubes(p, []cube.Cuber{c}, true)
+}
+
+func (e *Executor) UpsertCubes(p cube.Partition, c []cube.Cuber, is_transaction bool) {
+
+	end_transaction := func(tx driver.Tx) {
+		err := tx.Commit()
+		if err != nil {
+			slog.Fatalf("Error Committing tx %v %v ", err, tx)
+		}
+	}
+	if is_transaction {
+		tx, errr := e.conn.Begin()
+		if errr != nil {
+			slog.Fatalf("Error starting transaction %v", errr)
+		}
+		defer end_transaction(tx)
+
 	}
 
 	part := getPartition(p)
@@ -94,7 +109,7 @@ func (e *Executor) UpsertCubes(p cube.Partition, c []cube.Cuber) {
 
 	e.Exec(e.table.CreateTemporaryCopyTableSql(part))
 	cy := pq.NewCopierFromConn(e.conn)
-	err = cy.Start(e.table.CopyTableSql(part))
+	err := cy.Start(e.table.CopyTableSql(part))
 	if err != nil {
 		slog.Fatalf("Error starting copy %v", err)
 	}
@@ -112,10 +127,5 @@ func (e *Executor) UpsertCubes(p cube.Partition, c []cube.Cuber) {
 	}
 
 	e.Exec(e.table.MergeCopySql(part))
-
-	err = tx.Commit()
-	if err != nil {
-		slog.Fatalf("Error Committing tx %v ", err)
-	}
 
 }

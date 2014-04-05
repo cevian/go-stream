@@ -1,6 +1,7 @@
 package cube
 
 import (
+	//"fmt"
 	"log"
 	"time"
 )
@@ -144,6 +145,7 @@ type TimePartitionedCube struct {
 func timePartitioner(td time.Duration) func(Dimensions) Partition {
 	return func(d Dimensions) Partition {
 		t := d.(TimeIndexedDimensions).TimeIndex()
+		//fmt.Println("%v", t.Truncate(td))
 		return TimePartition{t.Truncate(td), td}
 	}
 }

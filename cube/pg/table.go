@@ -247,6 +247,7 @@ func (t *Table) ForeignTablesViewName() string {
 }*/
 
 func (t *Table) CreatePartitionTableSql(p Partition) string {
+	//fmt.Println(fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s ( %s, %s ) INHERITS(%s)", p.GetTableName(t.BaseTableName()), t.PrimaryKeySql(), p.GetConstraint(t), t.BaseTableName()))
 	return fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s ( %s, %s ) INHERITS(%s)", p.GetTableName(t.BaseTableName()), t.PrimaryKeySql(), p.GetConstraint(t), t.BaseTableName())
 }
 
@@ -383,8 +384,15 @@ func (t *Table) CopyDataFull(c cube.Cuber) []byte {
 	}
 
 	c.Visit(f)
+	fmt.Println("In CDF", data.String())
 	return data.Bytes()
 }
+
+/*func CreateSourceVector() c_query string {
+	return "CREATE TABLE Source_Vector (
+    source_id int ,offset bigserial,
+    PRIMARY KEY(source_id));"
+}*/
 
 /*func (t *Table) CopyDataCube(tableName string, c *cube.Cube, conn driver.Conn) {
 
