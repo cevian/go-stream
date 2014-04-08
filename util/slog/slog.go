@@ -2,13 +2,12 @@ package slog
 
 import (
 	"fmt"
-	"github.com/cloudflare/golog/logger"
 	stdlogger "log"
 	"os"
 )
 
 var (
-	defaultLog abstractLog            // the main logger object
+	defaultLog abstractLog // the main logger object
 )
 
 const (
@@ -45,16 +44,6 @@ func (l *StdLogger) Logf(level Level, format string, v ...interface{}) {
 	}
 }
 
-type CFLog struct {
-	log       *logger.Logger
-	logPrefix string
-}
-
-func (l *CFLog) Logf(level Level, format string, v ...interface{}) {
-	lev := int(level) + 1
-	l.log.Printf(logger.Level(lev), l.logPrefix, format, v...)
-}
-
 func Logf(level Level, format string, v ...interface{}) {
 	if defaultLog != nil {
 		defaultLog.Logf(level, format, v...)
@@ -84,6 +73,7 @@ func init() {
 func InitSimpleLogger() {
 	defaultLog = &StdLogger{stdlogger.New(os.Stderr, "", stdlogger.Lshortfile)}
 }
+
 /*
 func Init(logName string, logLevel string, logPrefix string, metrics *util.StreamingMetrics, metricsAddr string,
 	logAddress string, logNetwork string) {
