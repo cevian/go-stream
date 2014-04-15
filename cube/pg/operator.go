@@ -10,6 +10,20 @@ import (
 	"log"
 )
 
+/*
+type FTCubeDimensions struct {
+	//source cube.TimeDimension `db:"d1"`
+	source cube.StringDimension()
+	D2 cube.IntDimension  `db:"d2"`
+}
+
+type FTCubeAggregates struct {
+}
+
+func NewTestCube() *cube.Cube {
+	return cube.NewCube(FTCubeDimensions{}, FTCubeAggregates{})
+}*/
+
 func NewFTUpsertOp(dbconnect string, tableName string, cd cube.CubeDescriber) (stream.Operator, stream.ProcessedNotifier, *Executor) {
 	db, err := sql.Open("postgres", dbconnect)
 	if err != nil {
@@ -26,8 +40,10 @@ func NewFTUpsertOp(dbconnect string, tableName string, cd cube.CubeDescriber) (s
 	exec := NewExecutor(table, conn)
 
 	exec.CreateBaseTable()
-
-	exec.Exec("CREATE TABLE IF NOT EXISTS Source_Vectors (source_id bigserial, source_description VARCHAR(255),s_offset bigserial, PRIMARY KEY(source_id) );")
+	source_vtablename := fmt.Sprintf("%s_Source_Vectors", tableName)
+	s_vect_table := fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s(source_id bigserial, source_description VARCHAR(255),s_offset bigserial, PRIMARY KEY(source_id));",
+		source_vtablename)
+	exec.Exec(s_vect_table)
 
 	ready := stream.NewNonBlockingProcessedNotifier(2)
 
@@ -51,22 +67,26 @@ func NewFTUpsertOp(dbconnect string, tableName string, cd cube.CubeDescriber) (s
 			in.VisitPartitions(visitor)
 			//update here
 			var row string
-			var count int
+			//var count int
 			row = ""
-			length := len(flushed.SourceMap)
+			//length := len(flushed.SourceMap)
 			for s_ident, offset := range flushed.SourceMap {
 
-				row = fmt.Sprintf("('%d', '%s', '%d')", s_ident.ID, s_ident.Description, offset)
-				if count == length-2 {
+				row_update := fmt.Sprintf("WITH upsert AS (UPDATE %s SET s_offset='%d', source_description='%s' WHERE source_id='%d' RETURNING *) ",
+					source_vtablename, offset, s_ident.Description, s_ident.ID)
+				row_insert := fmt.Sprintf("INSERT INTO %s(source_id, source_description, s_offset) SELECT '%d', '%s', '%d' WHERE NOT EXISTS (SELECT * FROM upsert)\n",
+					source_vtablename, s_ident.ID, s_ident.Description, offset)
+				/*if count == length-2 {
 					row = row + ","
-				}
+				}*/
+				row = row + row_update + row_insert
 				//fmt.Println(row)
 			}
 			if row != "" {
-				fmt.Println(row)
+				//fmt.Println(row)
 
-				query := fmt.Sprintf("INSERT INTO Source_Vectors(source_id, source_description, s_offset) VALUES %s;", row)
-				fmt.Println(query)
+				query := row
+				fmt.Println("FT Query: ", query)
 				exec.Exec(query)
 			}
 
