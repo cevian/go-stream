@@ -7,7 +7,13 @@ type Generator interface {
 }
 
 func NewGenerator(mapCallback func(obj stream.Object, out Outputer), tn string) *SimpleGenerator {
-	return &SimpleGenerator{MapCallback: mapCallback, typename: tn}
+
+	reseter := func(obj stream.FTResetter, out Outputer) {
+
+		out.Out(1) <- obj
+	}
+
+	return &SimpleGenerator{MapCallback: mapCallback, ResetCallback: reseter, typename: tn}
 }
 
 type SimpleGenerator struct {
@@ -16,6 +22,7 @@ type SimpleGenerator struct {
 	StopCallback       func()
 	WorkerExitCallback func() //called once per worker
 	SingleExitCallback func() //called once per op
+	ResetCallback      func(obj stream.FTResetter, out Outputer)
 	typename           string
 }
 
@@ -24,6 +31,7 @@ func (g *SimpleGenerator) GetWorker() Worker {
 	w.CloseCallback = g.CloseCallback
 	w.StopCallback = g.StopCallback
 	w.ExitCallback = g.WorkerExitCallback
+	w.ResetCallback = g.ResetCallback
 	return w
 }
 

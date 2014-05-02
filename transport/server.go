@@ -111,7 +111,8 @@ func (src Server) Run() error {
 		go func() {
 			defer wg_sub.Done()
 			defer wg_scl.Done()
-			defer conn.Close() //handle connection will close conn because of reader and writer. But just as good coding practice
+			defer conn.Close() //handle connection will close conn because of reader and writer.
+			//But just as good coding practice
 			src.handleConnection(conn)
 		}()
 	}

@@ -11,6 +11,22 @@ const CHAN_SLACK = 100
 
 type Object interface{}
 
+type FTResetter interface {
+	Reset() bool
+	Cause() string
+}
+type FTReset struct {
+	Reason string
+}
+
+func (ftr FTReset) Reset() bool {
+	return true
+}
+
+func (ftr FTReset) Cause() string {
+	return ftr.Reason
+}
+
 /* soft stops are created by closing the input channel */
 type Operator interface {
 	// Init() bool   //?? do we want this?

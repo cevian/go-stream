@@ -1,11 +1,22 @@
 package mapper
 
-import "runtime"
-import "sync"
-import "github.com/cevian/go-stream/stream"
+import (
+	"github.com/cevian/go-stream/stream"
+	"github.com/cevian/go-stream/util/slog"
+	"runtime"
+	"sync"
+)
 
 func NewOp(mapCallback func(obj stream.Object, out Outputer), tn string) *Op {
 	gen := NewGenerator(mapCallback, tn)
+	return NewOpFromGenerator(gen, tn)
+}
+
+func NewFTOp(mapCallback func(obj stream.Object, out Outputer),
+	resetCallback func(obj stream.FTResetter, out Outputer),
+	tn string) *Op {
+	gen := NewGenerator(mapCallback, tn)
+	gen.ResetCallback = resetCallback
 	return NewOpFromGenerator(gen, tn)
 }
 
@@ -105,7 +116,18 @@ func (o *Op) runWorker(worker Worker, outCh chan stream.Object) {
 		select {
 		case obj, ok := <-o.In():
 			if ok {
-				worker.Map(obj, outputer)
+				//if it's a reset packet punt, maybe I should have a way to notify the worker function
+				reset, k := obj.(stream.FTResetter)
+				if k {
+					slog.Debugf("Reset")
+					worker.MapReset(reset, outputer)
+
+				} else {
+
+					slog.Debugf("Mapping")
+
+					worker.Map(obj, outputer)
+				}
 			} else {
 				o.WorkerClose(worker, outputer)
 				return

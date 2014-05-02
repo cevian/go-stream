@@ -9,10 +9,19 @@ import (
 type Worker interface {
 	Map(input stream.Object, out Outputer)
 	Validate(inCh chan stream.Object, typeName string) bool
+	//to handle a reset tuple
+	MapReset(obj stream.FTResetter, out Outputer)
 }
 
 func NewWorker(mapCallback func(obj stream.Object, out Outputer), typename string) *EfficientWorker {
-	return &EfficientWorker{MapCallback: mapCallback, typename: typename}
+	resetcall := func(obj stream.FTResetter, out Outputer) {
+
+		slog.Debugf("Reset Flush Cause in " + typename + ": " + obj.Cause())
+		out.Out(1) <- obj
+
+	}
+
+	return &EfficientWorker{MapCallback: mapCallback, ResetCallback: resetcall, typename: typename}
 }
 
 type EfficientWorker struct {
@@ -20,6 +29,7 @@ type EfficientWorker struct {
 	CloseCallback func(out Outputer) //on soft close, can output some final stuff
 	StopCallback  func()             //on hard close only
 	ExitCallback  func()             //on soft or hard close
+	ResetCallback func(obj stream.FTResetter, out Outputer)
 	outCh         chan stream.Object
 	typename      string
 }
@@ -48,6 +58,9 @@ func (w *EfficientWorker) Exit() {
 
 func (w *EfficientWorker) Map(input stream.Object, out Outputer) {
 	w.MapCallback(input, out)
+}
+func (w *EfficientWorker) MapReset(input stream.FTResetter, out Outputer) {
+	w.ResetCallback(input, out)
 }
 
 func (w *EfficientWorker) Validate(inCh chan stream.Object, typeName string) bool {

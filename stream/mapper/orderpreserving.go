@@ -1,10 +1,12 @@
 package mapper
 
-import "runtime"
-import "sync"
-import "github.com/cevian/go-stream/stream"
-
-import "log"
+import (
+	"github.com/cevian/go-stream/stream"
+	"github.com/cevian/go-stream/util/slog"
+	"log"
+	"runtime"
+	"sync"
+)
 
 func NewOrderedOp(mapCallback func(obj stream.Object, out Outputer), tn string) *OrderPreservingOp {
 	gen := NewGenerator(mapCallback, tn)
@@ -59,10 +61,19 @@ func (o *OrderPreservingOp) runWorker(worker Worker, workerid int) {
 			if ok {
 				o.resultQ <- workerid
 				o.lock <- true
-				outputer.sent = false
-				worker.Map(obj, outputer)
-				if !outputer.sent {
-					o.resultsNum[workerid] <- 0
+				reset, k := obj.(stream.FTResetter)
+				///slog.Debugf("Stat")
+				if k {
+					outputer.sent = false
+					slog.Debugf("Reset")
+					worker.MapReset(reset, outputer)
+
+				} else {
+					outputer.sent = false
+					worker.Map(obj, outputer)
+					if !outputer.sent {
+						o.resultsNum[workerid] <- 0
+					}
 				}
 			} else {
 				o.resultQ <- workerid

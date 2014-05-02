@@ -8,6 +8,8 @@ import (
 	"github.com/cevian/go-stream/stream/source"
 	"github.com/cevian/go-stream/util"
 	//"github.com/cevian/go-stream/util/metrics"
+	"bytes"
+	"encoding/gob"
 	"github.com/cevian/go-stream/util/slog"
 	"net"
 	"sync"
@@ -192,13 +194,34 @@ func (src *Client) connect() error {
 				//make sure everything was sent
 				closing = true
 			} else {
-				bytes := msg.([]byte)
-				seq, err := src.buf.Add(bytes)
+
+				var bytess []byte
+
+				reset, ok := msg.(stream.FTResetter)
+				if ok {
+					var b bytes.Buffer
+					enc := gob.NewEncoder(&b)
+					err := enc.Encode(reset)
+
+					if err == nil {
+						bytess = b.Bytes()
+						slog.Debugf("Reset %s", reset.Cause())
+
+					} else {
+						panic(err)
+					}
+
+				} else {
+					bytess = msg.([]byte)
+
+				}
+
+				seq, err := src.buf.Add(bytess)
 				if err != nil {
 					slog.Fatalf("Error adding item to buffer %v", err)
 					return err
 				}
-				sendData(sndChData, bytes, seq)
+				sendData(sndChData, bytess, seq)
 				writesNotCompleted += 1
 				//metrics.Gm.Event(&opName) // These are batched
 				//slog.Logf(logger.Levels.Debug, "Sent batch -- length %d seq %d", len(bytes), seq)

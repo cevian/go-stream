@@ -52,7 +52,7 @@ func (op *BatcherOperator) Flush() {
 	if op.container.Flush(op.Out()) {
 		op.outstanding += 1
 	}
-	slog.Debugf("Flushing :)")
+	slog.Debugf("Flushing")
 }
 
 func (op *BatcherOperator) LastFlush() {
@@ -104,9 +104,20 @@ func (op *BatcherOperator) Run() error {
 		//case IN
 		case obj, ok := <-op.In():
 			if ok {
-				op.container.Add(obj)
-				if !op.DownstreamWillCallback() && op.container.HasItems() && batchExpired == nil { //used by first item
-					batchExpired = time.After(op.minWaitAfterFirstItem)
+
+				//if the object is a begin tuple flush
+				reset, k := obj.(FTReset)
+				if k {
+					slog.Debugf("Reset Flush Cause: " + reset.Cause())
+					op.Flush()
+					op.Out() <- obj
+
+				} else {
+
+					op.container.Add(obj)
+					if !op.DownstreamWillCallback() && op.container.HasItems() && batchExpired == nil { //used by first item
+						batchExpired = time.After(op.minWaitAfterFirstItem)
+					}
 				}
 				//IMPOSSIBLE: hi && !wcb && !bne
 			} else {

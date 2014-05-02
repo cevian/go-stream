@@ -152,6 +152,9 @@ func (src *FTNextReaderSource) Run() error {
 	defer src.CloseOutput()
 	var count, off uint32
 	//here's where the recovery protocol comes in
+
+	//send a reset packet
+	src.Out() <- stream.FTReset{Reason: "Source Restart"}
 	off, count = 0, 0
 	slog.Debugf("Reading up to %d %s", src.MaxItems, " tuples")
 	for {
