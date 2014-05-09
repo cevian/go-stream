@@ -11,12 +11,41 @@ const CHAN_SLACK = 100
 
 type Object interface{}
 
+type FTResponder interface {
+	Target() int64
+	Offset() int64
+	Epoch() int64
+}
+
+type FTResponse struct {
+	target int64
+	offset int64
+	epoch  int64
+}
+
+func (f FTResponse) Target() int64 {
+	return f.target
+}
+
+func (f FTResponse) Offset() int64 {
+
+	return f.offset
+}
+
+func (f FTResponse) Epoch() int64 {
+
+	return f.epoch
+}
+
 type FTResetter interface {
 	Reset() bool
 	Cause() string
+	ID() int64
 }
+
 type FTReset struct {
-	Reason string
+	Reason    string
+	Source_id int64
 }
 
 func (ftr FTReset) Reset() bool {
@@ -25,6 +54,10 @@ func (ftr FTReset) Reset() bool {
 
 func (ftr FTReset) Cause() string {
 	return ftr.Reason
+}
+
+func (ftr FTReset) ID() int64 {
+	return ftr.Source_id
 }
 
 /* soft stops are created by closing the input channel */

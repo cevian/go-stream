@@ -9,13 +9,15 @@ import (
 	"github.com/cevian/go-stream/util/slog"
 	"io"
 	"math"
+	"strconv"
+	"time"
 )
 
 type NextReader interface {
 
 	//ReadNext should/can block until Stop Called
 	ReadNext() (next []byte, is_eof bool, err error)
-
+	Seek(offset int64) (ret int64, err error)
 	Stop()
 }
 
@@ -29,6 +31,21 @@ type IONextReader struct {
 
 func (rn IONextReader) Stop() {
 	rn.reader.Close()
+}
+
+/*Only use for FT*/
+func (rn IONextReader) Seek(offset int64) (ret int64, err error) {
+
+	f, ok := rn.reader.(io.ReadSeeker)
+	if ok {
+		ret, err := f.Seek(offset, 0)
+		return ret, err
+	} else {
+		panic("Unseekable file")
+	}
+
+	return -1, nil
+
 }
 
 func (rn IONextReader) ReadNext() (next []byte, is_eof bool, err error) {
@@ -85,6 +102,7 @@ type FTNextReaderSource struct {
 	NextReaderSource
 	SourceDescription string
 	SourceID          int64
+	AckChan           chan stream.Object
 }
 
 func NewIOReaderSource(reader io.ReadCloser) Sourcer {
@@ -92,17 +110,16 @@ func NewIOReaderSource(reader io.ReadCloser) Sourcer {
 	return NewNextReaderSource(rn)
 }
 
-func NewFTReaderSource(reader io.ReadCloser, start_index int64, source_name string, source_id int64) Sourcer {
+func NewFTReaderSource(reader io.ReadCloser, ackchan chan stream.Object, source_name string, source_id int64) Sourcer {
 
-	sek, ok := reader.(io.ReadSeeker)
-	if ok {
-		sek.Seek(start_index, 0)
-	} else {
+	_, ok := reader.(io.ReadSeeker)
+	if !ok {
 		panic("Cannot be an FT Source because we can't Seek")
+
 	}
 
 	rn := NewIOReaderWrapper(reader)
-	return NewNextFTReaderSourceMax(rn, math.MaxUint32, source_name, source_id)
+	return NewNextFTReaderSourceMax(rn, ackchan, math.MaxUint32, source_name, source_id)
 
 }
 
@@ -116,12 +133,12 @@ func NewNextReaderSource(reader NextReader) Sourcer {
 	return NewNextReaderSourceMax(reader, math.MaxUint32)
 }
 
-func NewNextFTReaderSourceMax(reader NextReader, max uint32, source_name string, source_id int64) Sourcer {
+func NewNextFTReaderSourceMax(reader NextReader, ackchan chan stream.Object, max uint32, source_name string, source_id int64) Sourcer {
 
 	hcc := stream.NewHardStopChannelCloser()
 	o := stream.NewBaseOut(stream.CHAN_SLACK)
 	nnrs := NextReaderSource{hcc, o, reader, max, true}
-	nrs := FTNextReaderSource{nnrs, source_name, source_id}
+	nrs := FTNextReaderSource{nnrs, source_name, source_id, ackchan}
 	return &nrs
 }
 
@@ -154,18 +171,48 @@ func (src *FTNextReaderSource) Run() error {
 	//here's where the recovery protocol comes in
 
 	//send a reset packet
-	src.Out() <- stream.FTReset{Reason: "Source Restart"}
+	t0 := time.Now()
+	src.Out() <- stream.FTReset{Source_id: src.SourceID, Reason: "Source Restart"}
+	yas := <-src.AckChan
+	offset, err := strconv.ParseInt(string(yas.([]byte)), 10, 0)
+	if err != nil {
+		panic("offset not a number")
+	}
+	src.NextReaderSource.readnexter.Seek(offset)
+	t1 := time.Now()
+	slog.Debugf("The call took %v to run.\n", t1.Sub(t0))
 	off, count = 0, 0
 	slog.Debugf("Reading up to %d %s", src.MaxItems, " tuples")
 	for {
-		b, eofReached, err := src.readnexter.ReadNext()
+
 		//if I've been stopped, exit no matter what I've read
 		select {
 		case <-src.StopNotifier:
 			//In this case readNexter was stopped
 			return nil
+		case obj, ok := <-src.AckChan:
+			slog.Debugf("Received an ack in source")
+			if ok {
+
+				r, k := obj.(stream.FTResponder)
+				if k {
+
+					if r.Target() == src.SourceID {
+						_, err := src.NextReaderSource.readnexter.Seek(r.Offset())
+
+						if err != nil {
+							panic("could not seek")
+						}
+					}
+
+				} else {
+					panic("debug")
+				}
+
+			}
 		default:
 		}
+		b, eofReached, err := src.readnexter.ReadNext()
 		if err != nil {
 			slog.Errorf("Reader encountered error %v", err)
 			src.readnexter.Stop()
@@ -203,6 +250,7 @@ func (src *NextReaderSource) Run() error {
 		case <-src.StopNotifier:
 			//In this case readNexter was stopped
 			return nil
+
 		default:
 		}
 		if err != nil {

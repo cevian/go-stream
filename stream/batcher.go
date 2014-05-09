@@ -106,9 +106,9 @@ func (op *BatcherOperator) Run() error {
 			if ok {
 
 				//if the object is a begin tuple flush
-				reset, k := obj.(FTReset)
+				reset, k := obj.(FTResetter)
 				if k {
-					slog.Debugf("Reset Flush Cause: " + reset.Cause())
+					slog.Debugf("Batcher Reset Flush Cause: " + reset.Cause())
 					op.Flush()
 					op.Out() <- obj
 
