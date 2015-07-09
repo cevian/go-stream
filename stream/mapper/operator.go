@@ -12,6 +12,7 @@ func NewOp(mapCallback func(obj stream.Object, out Outputer), tn string) *Op {
 func NewOpExitor(mapCallback func(obj stream.Object, out Outputer),
 	exitCallback func(),
 	tn string) *Op {
+
 	gen := NewGenerator(mapCallback, tn)
 	gen.SingleExitCallback = exitCallback
 	return NewOpFromGenerator(gen, tn)
@@ -27,7 +28,7 @@ func NewClosureOp(createWorker func() Worker,
 
 func NewOpFromGenerator(gen Generator, tn string) *Op {
 	base := stream.NewBaseInOutOp(stream.CHAN_SLACK)
-	op := Op{base, gen, tn, true}
+	op := Op{base, gen, tn, true, 0}
 	op.Init()
 	return &op
 }
@@ -46,9 +47,10 @@ type Exitor interface {
 
 type Op struct {
 	*stream.BaseInOutOp
-	Gen      Generator
-	Typename string
-	Parallel bool
+	Gen        Generator
+	Typename   string
+	Parallel   bool
+	MaxWorkers int
 }
 
 func (o *Op) Init() bool {
@@ -129,11 +131,14 @@ func (o *Op) Run() error {
 	//perform some validation
 	//Processor.Validate()
 
-	maxWorkers := runtime.NumCPU()
+	maxWorkers := o.MaxWorkers
 	if !o.Parallel {
 		maxWorkers = 1
+	} else if o.MaxWorkers == 0 {
+		maxWorkers = runtime.NumCPU()
 	}
 
+	println("Starting ", maxWorkers, " workers")
 	opwg := sync.WaitGroup{}
 	opwg.Add(maxWorkers)
 

@@ -120,9 +120,11 @@ func (o *OrderPreservingOp) Run() error {
 	//perform some validation
 	//Processor.Validate()
 
-	maxWorkers := runtime.NumCPU()
+	maxWorkers := o.MaxWorkers
 	if !o.Parallel {
 		maxWorkers = 1
+	} else if o.MaxWorkers == 0 {
+		maxWorkers = runtime.NumCPU()
 	}
 	o.InitiateWorkerChannels(maxWorkers)
 
