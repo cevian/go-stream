@@ -6,6 +6,10 @@ type InterfaceWriter interface {
 	Write(i interface{}) error
 }
 
+type InterfaceCloser interface {
+	Close()
+}
+
 type InterfaceWriterSink struct {
 	*stream.HardStopChannelCloser
 	*stream.BaseIn
@@ -21,7 +25,9 @@ func (sink InterfaceWriterSink) Run() error {
 					return err
 				}
 			} else {
-				// todo: close the writer
+				if cl, ok := sink.writer.(InterfaceCloser); ok {
+					cl.Close()
+				}
 				return nil
 			}
 		case <-sink.StopNotifier:
