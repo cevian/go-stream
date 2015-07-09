@@ -2,6 +2,15 @@ package mapper
 
 import "github.com/cevian/go-stream/stream"
 
+/* there is 3 types of state:
+1. operator state
+2. worker state (per parrallel execution)
+3. map callback state (per-tuple state)
+
+Simple generators supports 1 and 3 but not 2
+Closure generator supprts 1,2,3
+*/
+
 type Generator interface {
 	GetWorker() Worker
 }
@@ -9,6 +18,9 @@ type Generator interface {
 func NewGenerator(mapCallback func(obj stream.Object, out Outputer), tn string) *SimpleGenerator {
 	return &SimpleGenerator{MapCallback: mapCallback, typename: tn}
 }
+
+/* The simple generator can have state shared across workers of an op or state
+that is unique to each tuple processed but not state that is unique to a worker */
 
 type SimpleGenerator struct {
 	MapCallback        func(obj stream.Object, out Outputer)
@@ -32,6 +44,9 @@ func (w *SimpleGenerator) Exit() {
 		w.SingleExitCallback()
 	}
 }
+
+/* Allow creation of new state per worker. Shared across map callbacks but
+unique to the worker instead of the operator */
 
 type ClosureGenerator struct {
 	createWorker       func() Worker
