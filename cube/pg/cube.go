@@ -4,6 +4,7 @@ import "github.com/cevian/go-stream/cube"
 import (
 	"log"
 	"reflect"
+	"time"
 )
 
 func VisitWrapper(wrapper reflect.Value, visitor func(fieldValue reflect.Value, fieldDescription reflect.StructField)) {
@@ -92,7 +93,16 @@ func getDimensionPgTypeVisit(fieldValue reflect.Value, fieldDescription reflect.
 	default:
 		log.Fatal("Unknown Dimension type ", reflect.TypeOf(dt), " for field ", name)
 	case cube.TimeDimension:
-		return &TimeCol{NewDefaultCol(name)}
+		precision := fieldDescription.Tag.Get("precision")
+		if precision == "" {
+			precision = "s"
+		}
+
+		pTd, err := time.ParseDuration("1" + precision)
+		if err != nil {
+			log.Fatal("Invalid precision ", precision)
+		}
+		return &TimeCol{NewDefaultCol(name), pTd}
 	case cube.IntDimension:
 
 		tn := "INT"

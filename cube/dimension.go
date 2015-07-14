@@ -18,6 +18,10 @@ func (t *TimeDimension) Unix() int64 {
 	return (*time.Time)(t).Unix()
 }
 
+func (t *TimeDimension) UnixNano() int64 {
+	return (*time.Time)(t).UnixNano()
+}
+
 func (t *TimeDimension) Time() time.Time {
 	return *(*time.Time)(t)
 }

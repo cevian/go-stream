@@ -62,15 +62,23 @@ func (c *StringCol) TypeName() string {
 
 type TimeCol struct {
 	*DefaultCol
+	td time.Duration
 }
 
 func (c *TimeCol) TypeName() string {
+	if c.td < time.Second {
+		return "BIGINT"
+	}
 	return "INT"
 }
 
 func (c *TimeCol) PrintInterface(in interface{}) interface{} {
 	td := in.(cube.TimeDimension)
-	return td.Unix()
+	return td.UnixNano() / int64(c.td)
+}
+
+func (c *TimeCol) PrintTime(in time.Time) int64 {
+	return in.UnixNano() / int64(c.td)
 }
 
 type CountCol struct {
@@ -125,7 +133,7 @@ func (p TimePartition) GetTableName(basename string) string {
 func (p TimePartition) GetConstraint(t *Table) string {
 	start := p.Time()
 	end := start.Add(p.Duration()).Add(-time.Millisecond)
-	return fmt.Sprintf("CHECK ( %s BETWEEN %d AND %d ) ", t.timecol.Name(), start.Unix(), end.Unix())
+	return fmt.Sprintf("CHECK ( %s BETWEEN %d AND %d ) ", t.timecol.Name(), t.timecol.PrintInterface(cube.TimeDimension(start)), t.timecol.PrintInterface(cube.TimeDimension(end)))
 }
 
 /*
