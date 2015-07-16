@@ -2,9 +2,9 @@ package pg
 
 import (
 	"database/sql/driver"
-	"github.com/cevian/pq"
 	"github.com/cevian/go-stream/cube"
 	"github.com/cevian/go-stream/util/slog"
+	"github.com/cevian/pq"
 	"reflect"
 )
 
@@ -15,6 +15,10 @@ type Executor struct {
 
 func NewExecutor(t *Table, c driver.Conn) *Executor {
 	return &Executor{t, c}
+}
+
+func (e *Executor) GetConn() driver.Conn {
+	return e.conn
 }
 
 func (e *Executor) ExecErr(sql string, args ...interface{}) (driver.Result, error) {
