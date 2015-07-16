@@ -1,7 +1,6 @@
 package cube
 
 import (
-	"github.com/cevian/go-stream/cube/pg/hll"
 	"time"
 )
 
@@ -40,12 +39,4 @@ func NewStringDimension(i string) *StringDimension {
 	ret := StringDimension(i)
 	return &ret
 
-}
-
-type HllDimension struct {
-	Hll *hll.Hll
-}
-
-func NewHllDimension(i *hll.Hll) *HllDimension {
-	return &HllDimension{Hll: i}
 }
