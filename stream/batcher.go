@@ -1,8 +1,9 @@
 package stream
 
 import (
-	"github.com/cevian/go-stream/util/slog"
 	"time"
+
+	"github.com/cevian/go-stream/util/slog"
 )
 
 type BatchContainer interface {
@@ -135,6 +136,9 @@ func (op *BatcherOperator) Run() error {
 			return nil
 		//case DRCB
 		case count := <-op.processedDownstream.NotificationChannel():
+			if op.outstanding == 0 {
+				panic("Should never happen, will cause underflow")
+			}
 			op.outstanding -= count
 			if op.DownstreamCanAcceptFlush() && op.container.HasItems() && batchExpired == nil {
 				op.Flush()

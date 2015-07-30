@@ -1,8 +1,9 @@
 package stream
 
 import (
-	"github.com/cevian/go-stream/util/slog"
 	"sync"
+
+	"github.com/cevian/go-stream/util/slog"
 )
 
 type Runner struct {
@@ -62,7 +63,7 @@ func (r *Runner) AsyncRun(op Operator, startCloser bool) {
 		defer r.wg.Done()
 		err := op.Run()
 		if err != nil {
-			slog.Errorf("Got an err from a child in runner: %v", err)
+			slog.Errorf("Got an err from a child (%v) in runner: %v", op, err)
 			select {
 			case r.errors <- err:
 			default:
