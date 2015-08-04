@@ -28,7 +28,7 @@ func NewClosureOp(createWorker func() Worker,
 
 func NewOpFromGenerator(gen Generator, tn string) *Op {
 	base := stream.NewBaseInOutOp(stream.CHAN_SLACK)
-	op := Op{base, gen, tn, true, 0}
+	op := Op{base, NewConcurrentErrorHandler(), gen, tn, true, 0}
 	op.Init()
 	return &op
 }
@@ -47,6 +47,7 @@ type Exitor interface {
 
 type Op struct {
 	*stream.BaseInOutOp
+	*ConcurrentErrorHandler
 	Gen        Generator
 	Typename   string
 	Parallel   bool
@@ -108,8 +109,15 @@ func (o *Op) runWorker(worker Worker, outCh chan stream.Object) {
 		case obj, ok := <-o.In():
 			if ok {
 				worker.Map(obj, outputer)
+				if outputer.HasError() {
+					o.SetError(outputer.Error())
+					return
+				}
 			} else {
 				o.WorkerClose(worker, outputer)
+				if outputer.HasError() {
+					o.SetError(outputer.Error())
+				}
 				return
 			}
 		case <-o.StopNotifier:
@@ -152,5 +160,5 @@ func (o *Op) Run() error {
 	opwg.Wait()
 	o.Exit()
 	//stop or close here?
-	return nil
+	return o.Error()
 }

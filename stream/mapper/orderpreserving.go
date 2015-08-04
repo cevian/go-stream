@@ -13,12 +13,13 @@ func NewOrderedOp(mapCallback func(obj stream.Object, out Outputer), tn string) 
 }
 
 func NewOrderedOpWrapper(op *Op) *OrderPreservingOp {
-	o := OrderPreservingOp{Op: op}
+	o := OrderPreservingOp{Op: op, ConcurrentErrorHandler: NewConcurrentErrorHandler()}
 	o.Init()
 	return &o
 }
 
 type OrderPreservingOutputer struct {
+	*ConcurrentErrorHandler
 	sent bool
 	out  chan<- stream.Object
 	num  chan<- int
@@ -31,11 +32,12 @@ func (o *OrderPreservingOutputer) Out(num int) chan<- stream.Object {
 }
 
 func NewOrderPreservingOutputer(out chan<- stream.Object, num chan<- int) *OrderPreservingOutputer {
-	return &OrderPreservingOutputer{false, out, num}
+	return &OrderPreservingOutputer{NewConcurrentErrorHandler(), false, out, num}
 }
 
 type OrderPreservingOp struct {
 	*Op
+	*ConcurrentErrorHandler
 	results    []chan stream.Object //[]chan O
 	resultsNum []chan int
 	resultQ    chan int
@@ -64,6 +66,10 @@ func (o *OrderPreservingOp) runWorker(worker Worker, workerid int) {
 				if !outputer.sent {
 					o.resultsNum[workerid] <- 0
 				}
+				if outputer.HasError() {
+					o.SetError(outputer.Error())
+					return
+				}
 			} else {
 				o.resultQ <- workerid
 				o.lock <- true
@@ -71,6 +77,9 @@ func (o *OrderPreservingOp) runWorker(worker Worker, workerid int) {
 				o.WorkerClose(worker, outputer)
 				if !outputer.sent {
 					o.resultsNum[workerid] <- 0
+				}
+				if outputer.HasError() {
+					o.SetError(outputer.Error())
 				}
 				return
 			}
@@ -152,5 +161,5 @@ func (o *OrderPreservingOp) Run() error {
 	combinerwg.Wait()
 	o.Exit()
 	//stop or close here?
-	return nil
+	return o.Error()
 }
