@@ -64,6 +64,10 @@ func (c *InterfaceContainer) HasItems() bool {
 	return len(c.store) > 0
 }
 
+func (c *InterfaceContainer) IsFull() bool {
+	return false
+}
+
 func (c *InterfaceContainer) Add(obj Object) {
 	if cap(c.store) <= len(c.store) {
 		news := make([]interface{}, len(c.store), 2*cap(c.store))

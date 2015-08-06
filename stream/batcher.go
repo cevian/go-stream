@@ -11,6 +11,7 @@ type BatchContainer interface {
 	FlushAll(chan<- Object) bool
 	HasItems() bool
 	Add(object Object)
+	IsFull() bool //container shouldn't remain full after a flush. Invariant: IsFull() implies HasItems()
 }
 
 type BatcherOperator struct {
@@ -100,9 +101,22 @@ func (op *BatcherOperator) Run() error {
 
 	//liveness: has items => either batch_expired != nil or DownstreamWillCallback
 	for {
+		in := op.In()
+		if op.container.IsFull() {
+			if op.DownstreamCanAcceptFlush() {
+				//PROGRESS 1
+				op.Flush()
+				batchExpired = time.After(op.minWaitBetweenFlushes)
+			} else {
+				if !op.DownstreamWillCallback() && batchExpired == nil {
+					panic("Batcher deadlocked. Should not happen")
+				}
+				in = nil
+			}
+		}
 		select {
 		//case IN
-		case obj, ok := <-op.In():
+		case obj, ok := <-in:
 			if ok {
 				op.container.Add(obj)
 				if !op.DownstreamWillCallback() && op.container.HasItems() && batchExpired == nil { //used by first item
