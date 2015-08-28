@@ -1,10 +1,11 @@
 package compress
 
 import (
+	"log"
+
 	"code.google.com/p/snappy-go/snappy"
 	"github.com/cevian/go-stream/stream"
 	"github.com/cevian/go-stream/stream/mapper"
-	"log"
 )
 
 func NewSnappyEncodeOp() stream.Operator {
@@ -15,7 +16,7 @@ func NewSnappyEncodeOp() stream.Operator {
 			if err != nil {
 				log.Printf("Error in snappy compression %v", err)
 			}
-			out.Out(1) <- compressed
+			out.Sending(1).Send(compressed)
 		}
 		return mapper.NewWorker(fn, name)
 	}
@@ -30,7 +31,7 @@ func NewSnappyDecodeOp() stream.Operator {
 			if err != nil {
 				log.Printf("Error in snappy decompression %v", err)
 			}
-			out.Out(1) <- decompressed
+			out.Sending(1).Send(decompressed)
 		}
 		return mapper.NewWorker(fn, name)
 	}

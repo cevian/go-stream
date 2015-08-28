@@ -117,7 +117,7 @@ func (o *Op) WorkerClose(worker Worker, outputer Outputer) {
 }
 
 func (o *Op) runWorker(worker Worker, outCh chan stream.Object) {
-	outputer := NewSimpleOutputer(outCh)
+	outputer := NewSimpleOutputer(outCh, o.StopNotifier)
 	for {
 		select {
 		case obj, ok := <-o.In():

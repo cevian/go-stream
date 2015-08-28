@@ -3,10 +3,11 @@ package encoding
 import (
 	"bytes"
 	"encoding/gob"
-	"github.com/cevian/go-stream/stream"
-	"github.com/cevian/go-stream/stream/mapper"
 	"io"
 	"log"
+
+	"github.com/cevian/go-stream/stream"
+	"github.com/cevian/go-stream/stream/mapper"
 	//"reflect"
 )
 
@@ -53,7 +54,7 @@ func NewGobDecodeOp(
 		decoder := GobGeneralDecoder()
 		fn := func(obj stream.Object, out mapper.Outputer) {
 			decoded := decFn(obj.([]byte), decoder)
-			out.Out(1) <- decoded
+			out.Sending(1).Send(decoded)
 		}
 		return mapper.NewWorker(fn, name)
 	}
@@ -91,7 +92,7 @@ func NewGobEncodeOp() stream.InOutOperator {
 				}
 			}
 
-			outputter.Out(1) <- out
+			outputter.Sending(1).Send(out)
 		}
 		return mapper.NewWorker(fn, name)
 	}

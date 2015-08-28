@@ -1,11 +1,12 @@
 package timing
 
 import (
-	"github.com/cevian/go-stream/stream"
-	"github.com/cevian/go-stream/stream/mapper"
 	"log"
 	"sync/atomic"
 	"time"
+
+	"github.com/cevian/go-stream/stream"
+	"github.com/cevian/go-stream/stream/mapper"
 )
 
 /* Backwards compatibility */
@@ -24,7 +25,7 @@ func NewTimingOp() (oper stream.Operator, count *uint32, duration *time.Duration
 			start_batch_time = &now
 		}
 		atomic.AddUint32(counter, 1)
-		out.Out(1) <- msg
+		out.Sending(1).Send(msg)
 	}
 
 	closefn := func() {

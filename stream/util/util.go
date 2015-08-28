@@ -1,10 +1,11 @@
 package util
 
 import (
-	"github.com/cevian/go-stream/stream"
-	"github.com/cevian/go-stream/stream/mapper"
 	"log"
 	"os"
+
+	"github.com/cevian/go-stream/stream"
+	"github.com/cevian/go-stream/stream/mapper"
 )
 
 func NewDropOp() *mapper.Op {
@@ -16,7 +17,7 @@ func NewDropOp() *mapper.Op {
 
 func NewPassthruOp() *mapper.Op {
 	fn := func(input stream.Object, out mapper.Outputer) {
-		out.Out(1) <- input
+		out.Sending(1).Send(input)
 	}
 
 	return mapper.NewOp(fn, "PassthruOp")
@@ -38,7 +39,7 @@ func NewTailDataOp() stream.Operator {
 				logger.Printf("%v", input)
 			}
 
-			outputer.Out(1) <- input
+			outputer.Sending(1).Send(input)
 		}
 
 		return mapper.NewWorker(fn, name)

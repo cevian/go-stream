@@ -2,6 +2,7 @@ package encoding
 
 import (
 	"encoding/json"
+
 	"github.com/cevian/go-stream/stream"
 	"github.com/cevian/go-stream/stream/mapper"
 	"github.com/cevian/go-stream/util/slog"
@@ -41,7 +42,7 @@ func NewJsonDecodeOp(decFn func([]byte, func([]byte, interface{})) stream.Object
 		decoder := JsonGeneralDecoder()
 		fn := func(obj stream.Object, out mapper.Outputer) {
 			decoded := decFn(obj.([]byte), decoder)
-			out.Out(1) <- decoded
+			out.Sending(1).Send(decoded)
 		}
 		return mapper.NewWorker(fn, name)
 	}
@@ -56,7 +57,7 @@ func NewJsonEncodeOp() stream.Operator {
 			if err != nil {
 				slog.Errorf("Error marshaling json %v\t%+v", err, obj)
 			}
-			out.Out(1) <- res
+			out.Sending(1).Send(res)
 		}
 		return mapper.NewWorker(fn, name)
 	}

@@ -20,9 +20,10 @@ func NewOrderedOpWrapper(op *Op) *OrderPreservingOp {
 
 type OrderPreservingOutputer struct {
 	*ConcurrentErrorHandler
-	sent bool
-	out  chan<- stream.Object
-	num  chan<- int
+	sent         bool
+	out          chan<- stream.Object
+	num          chan<- int
+	stopNotifier <-chan bool
 }
 
 func (o *OrderPreservingOutputer) Out(num int) chan<- stream.Object {
@@ -31,8 +32,21 @@ func (o *OrderPreservingOutputer) Out(num int) chan<- stream.Object {
 	return o.out
 }
 
-func NewOrderPreservingOutputer(out chan<- stream.Object, num chan<- int) *OrderPreservingOutputer {
-	return &OrderPreservingOutputer{NewConcurrentErrorHandler(), false, out, num}
+func (o *OrderPreservingOutputer) Sending(num int) Sender {
+	o.sent = true
+	o.num <- num
+	return o
+}
+
+func (o *OrderPreservingOutputer) Send(rec stream.Object) {
+	select {
+	case o.out <- rec:
+	case <-o.stopNotifier:
+	}
+}
+
+func NewOrderPreservingOutputer(out chan<- stream.Object, num chan<- int, stopNotifier <-chan bool) *OrderPreservingOutputer {
+	return &OrderPreservingOutputer{NewConcurrentErrorHandler(), false, out, num, stopNotifier}
 }
 
 type OrderPreservingOp struct {
@@ -53,7 +67,7 @@ func (o *OrderPreservingOp) MakeOrdered() stream.ParallelizableOperator {
 }
 
 func (o *OrderPreservingOp) runWorker(worker Worker, workerid int) {
-	outputer := NewOrderPreservingOutputer(o.results[workerid], o.resultsNum[workerid])
+	outputer := NewOrderPreservingOutputer(o.results[workerid], o.resultsNum[workerid], o.StopNotifier)
 	for {
 		<-o.lock
 		select {

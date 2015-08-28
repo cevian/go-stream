@@ -1,10 +1,11 @@
 package encoding
 
 import (
+	"log"
+
 	"code.google.com/p/goprotobuf/proto"
 	"github.com/cevian/go-stream/stream"
 	"github.com/cevian/go-stream/stream/mapper"
-	"log"
 	//"reflect"
 )
 
@@ -34,7 +35,7 @@ func NewProtobufDecodeOp(decFn func([]byte, func([]byte, proto.Message)) stream.
 		decoder := ProtobufGeneralDecoder()
 		fn := func(obj stream.Object, out mapper.Outputer) {
 			decoded := decFn(obj.([]byte), decoder)
-			out.Out(1) <- decoded
+			out.Sending(1).Send(decoded)
 		}
 		return mapper.NewWorker(fn, name)
 	}
@@ -50,7 +51,7 @@ func NewProtobufEncodeOp() stream.Operator {
 			if err != nil {
 				log.Printf("Error marshaling protobuf %v\t%#v", err, in)
 			}
-			outputer.Out(1) <- out
+			outputer.Sending(1).Send(out)
 		}
 		return mapper.NewWorker(fn, name)
 	}
