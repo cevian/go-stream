@@ -137,6 +137,8 @@ func (o *OrderPreservingOp) Run() error {
 	}
 	o.InitiateWorkerChannels(maxWorkers)
 
+	println("Starting ", maxWorkers, " orderpreserving workers for ", o.String())
+
 	opwg := sync.WaitGroup{}
 	opwg.Add(maxWorkers)
 

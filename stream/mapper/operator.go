@@ -76,6 +76,20 @@ func (o *Op) SetParallel(flag bool) *Op {
 	return o
 }
 
+func (op *Op) Stop() error {
+	err := op.BaseInOutOp.Stop()
+
+	/* TODO: deprecate */
+	/* hack to prevent blocking on output when stop is called */
+	/* important with Out() interface of Outputer solved with the */
+	/* Sending(x).Send() interface. Deprecate after Out() retired. */
+	go func() {
+		for _ = range op.Out() {
+		}
+	}()
+	return err
+}
+
 func (o *Op) String() string {
 	return o.Typename
 }
@@ -146,7 +160,7 @@ func (o *Op) Run() error {
 		maxWorkers = runtime.NumCPU()
 	}
 
-	println("Starting ", maxWorkers, " workers")
+	println("Starting ", maxWorkers, " workers for ", o.String())
 	opwg := sync.WaitGroup{}
 	opwg.Add(maxWorkers)
 
