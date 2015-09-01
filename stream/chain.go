@@ -21,7 +21,7 @@ type Chain interface {
 
 /* A SimpleChain implements the operator interface too! */
 type SimpleChain struct {
-	runner *Runner
+	runner Runner
 	//	Ops         []Operator
 	//	wg          *sync.WaitGroup
 	//	closenotify chan bool
@@ -35,7 +35,7 @@ func NewChain() *SimpleChain {
 }
 
 func NewSimpleChain() *SimpleChain {
-	return &SimpleChain{runner: NewRunner()}
+	return &SimpleChain{runner: NewRunner(), Name: "SimpleChain"}
 }
 
 func (c *SimpleChain) Operators() []Operator {
@@ -44,6 +44,7 @@ func (c *SimpleChain) Operators() []Operator {
 
 func (c *SimpleChain) SetName(name string) Chain {
 	c.Name = name
+	c.runner.SetName(name)
 	return c
 }
 
@@ -82,7 +83,7 @@ func (c *SimpleChain) Start() error {
 func (c *SimpleChain) SoftStop() error {
 	if !c.sentstop {
 		c.sentstop = true
-		slog.Warnf("In soft close")
+		slog.Warnf("In soft close of chain %s", c.Name)
 		ops := c.runner.Operators()
 		ops[0].Stop()
 	}
@@ -93,7 +94,7 @@ func (c *SimpleChain) SoftStop() error {
 func (c *SimpleChain) Stop() error {
 	if !c.sentstop {
 		c.sentstop = true
-		slog.Warnf("In hard close")
+		slog.Warnf("In hard close of chain %s", c.Name)
 		c.runner.HardStop()
 	}
 	return nil
@@ -103,18 +104,20 @@ func (c *SimpleChain) Wait() error {
 	//slog.Logf(logger.Levels.Info, "Waiting for closenotify %s", c.Name)
 	//<-c.runner.CloseNotifier()
 	err, errOk := <-c.runner.ErrorChannel()
-	if errOk {
-		slog.Warnf("Hard Close in SimpleChain %s %v", c.Name, err)
-		c.Stop()
-	} else {
-		slog.Infof("Soft Close in SimpleChain %s", c.Name)
-		c.SoftStop()
+	if !c.sentstop {
+		if errOk {
+			slog.Warnf("Hard Close in %s %v", c.Name, err)
+			c.Stop()
+		} else {
+			slog.Infof("Soft Close in %s", c.Name)
+			c.SoftStop()
+		}
 	}
-	slog.Infof("Waiting for runner to finish")
+	slog.Infof("Waiting for runner to finish in %s", c.Name)
 	c.runner.Wait()
-	slog.Infof("Exiting SimpleChain")
+	slog.Infof("Exiting %s", c.Name)
 
-	return nil
+	return err
 }
 
 /* Operator compatibility */

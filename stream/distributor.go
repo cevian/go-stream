@@ -2,6 +2,7 @@ package stream
 
 import (
 	"errors"
+
 	"github.com/cevian/go-stream/util/slog"
 )
 
@@ -19,7 +20,7 @@ type DistributeOperator struct {
 	branchCreator func(DistribKey) (DistributorChildOp, bool)
 	//the 2nd returnd tells the distributor whether or not to run the new op
 	outputs map[DistribKey]chan<- Object
-	runner  *Runner
+	runner  Runner
 }
 
 func NewDistributor(mapp func(Object) DistribKey, creator func(DistribKey) (DistributorChildOp, bool)) *DistributeOperator {

@@ -2,6 +2,7 @@ package stream
 
 import (
 	"errors"
+
 	"github.com/cevian/go-stream/util/slog"
 )
 
@@ -14,7 +15,7 @@ type FanoutOperator struct {
 	*HardStopChannelCloser
 	*BaseIn
 	outputs []chan Object
-	runner  *Runner
+	runner  Runner
 	//ops     []fanoutChildOp // this can be a single operator or a chain
 }
 

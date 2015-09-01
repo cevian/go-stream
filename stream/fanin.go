@@ -28,8 +28,8 @@ type FaninOperator struct {
 	dst     faninDestOp
 	channel chan Object
 
-	runnerSrc *Runner
-	runnerDst *Runner
+	runnerSrc Runner
+	runnerDst Runner
 	isRunning bool
 	//ops     []fanoutChildOp // this can be a single operator or a chain
 }
