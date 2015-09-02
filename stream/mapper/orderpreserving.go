@@ -82,6 +82,7 @@ func (o *OrderPreservingOp) runWorker(worker Worker, workerid int) {
 				}
 				if outputer.HasError() {
 					o.SetError(outputer.Error())
+					o.Stop()
 					return
 				}
 			} else {
@@ -94,6 +95,7 @@ func (o *OrderPreservingOp) runWorker(worker Worker, workerid int) {
 				}
 				if outputer.HasError() {
 					o.SetError(outputer.Error())
+					o.Stop()
 				}
 				return
 			}

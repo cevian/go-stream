@@ -3,11 +3,13 @@ package source
 import (
 	"bufio"
 	"encoding/binary"
+	"sync"
 	//"errors"
-	"github.com/cevian/go-stream/stream"
-	"github.com/cevian/go-stream/util/slog"
 	"io"
 	"math"
+
+	"github.com/cevian/go-stream/stream"
+	"github.com/cevian/go-stream/util/slog"
 )
 
 type NextReader interface {
@@ -72,8 +74,9 @@ func NewIOReaderWrapperLengthDelim(r io.ReadCloser) NextReader {
 type NextReaderSource struct {
 	*stream.HardStopChannelCloser
 	*stream.BaseOut
-	readnexter NextReader
-	MaxItems   uint32
+	readnexter     NextReader
+	MaxItems       uint32
+	stopReadNexter sync.Once
 }
 
 func NewIOReaderSource(reader io.ReadCloser) Sourcer {
@@ -94,14 +97,14 @@ func NewNextReaderSourceMax(reader NextReader, max uint32) Sourcer {
 
 	hcc := stream.NewHardStopChannelCloser()
 	o := stream.NewBaseOut(stream.CHAN_SLACK)
-	nrs := NextReaderSource{hcc, o, reader, max}
+	nrs := NextReaderSource{hcc, o, reader, max, sync.Once{}}
 	return &nrs
 }
 
 func (src *NextReaderSource) Stop() error {
-	close(src.StopNotifier)
-	src.readnexter.Stop()
-	return nil
+	err := src.HardStopChannelCloser.Stop()
+	src.stopReadNexter.Do(src.readnexter.Stop)
+	return err
 }
 
 func (src *NextReaderSource) Run() error {
@@ -123,7 +126,7 @@ func (src *NextReaderSource) Run() error {
 		}
 		if err != nil {
 			slog.Errorf("Reader encountered error %v", err)
-			src.readnexter.Stop()
+			src.stopReadNexter.Do(src.readnexter.Stop)
 			return err
 		} else if len(b) > 0 {
 			count++
@@ -131,7 +134,7 @@ func (src *NextReaderSource) Run() error {
 		}
 		if eofReached || (count >= src.MaxItems) {
 			slog.Debugf("Got eof in Next Reader Source %d, %d", count, src.MaxItems)
-			src.readnexter.Stop()
+			src.stopReadNexter.Do(src.readnexter.Stop)
 			return nil
 		}
 	}

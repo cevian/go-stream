@@ -125,12 +125,14 @@ func (o *Op) runWorker(worker Worker, outCh chan stream.Object) {
 				worker.Map(obj, outputer)
 				if outputer.HasError() {
 					o.SetError(outputer.Error())
+					o.Stop()
 					return
 				}
 			} else {
 				o.WorkerClose(worker, outputer)
 				if outputer.HasError() {
 					o.SetError(outputer.Error())
+					o.Stop()
 				}
 				return
 			}

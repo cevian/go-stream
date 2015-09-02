@@ -5,7 +5,12 @@ type HardStopChannelCloser struct {
 }
 
 func (op *HardStopChannelCloser) Stop() error {
-	close(op.StopNotifier)
+	//prevents double close
+	select {
+	case <-op.StopNotifier:
+	default:
+		close(op.StopNotifier)
+	}
 	return nil
 }
 

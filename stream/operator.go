@@ -23,7 +23,7 @@ type Operator interface {
 	Run() error
 
 	// Stop force a hard close of the stream. Look at HardStopChannelCloser for a possible implementation. Should be thread-safe
-	// Stop will only be called once but it can be called before or after run exits. If called after, is a no-op
+	// Stop will probably be called once but should be idempotent. It can be called before or after run exits. If called after, is a no-op
 	Stop() error
 }
 
