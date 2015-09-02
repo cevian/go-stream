@@ -25,10 +25,12 @@ type Runner interface {
 type FailFastRunner struct {
 	*FailSilentRunner
 	failError sync.Once
+	errors    chan error
 }
 
 func NewRunner() *FailFastRunner {
-	return &FailFastRunner{NewFailSilentRunner(), sync.Once{}}
+	r := NewFailSilentRunner()
+	return &FailFastRunner{r, sync.Once{}, make(chan error, cap(r.errors))}
 }
 
 func (t *FailFastRunner) AsyncRun(op Operator, startCloser bool) {
@@ -45,19 +47,27 @@ func (t *FailFastRunner) AsyncRunAll() {
 	})
 }
 
-func (t *FailFastRunner) monitorErrors() error {
+func (t *FailFastRunner) monitorErrors() {
 	slog.Infof("Starting monitorErrors for failfast in %s", t.Name)
-	err, errOk := <-t.ErrorChannel()
-	if errOk {
-		slog.Warnf("Hard Close in FailFastRunner %s %v", t.Name, err)
-		t.HardStop()
-		select {
-		case t.errors <- err:
-		default:
+	stopped := false
+	for {
+		err, errOk := <-t.FailSilentRunner.ErrorChannel()
+		if errOk {
+			if !stopped {
+				slog.Warnf("Hard Close in FailFastRunner %s %v", t.Name, err)
+				t.HardStop()
+				stopped = true
+			}
+			t.errors <- err
+		} else {
+			close(t.errors)
+			return
 		}
-		return err
 	}
-	return nil
+}
+
+func (r *FailFastRunner) ErrorChannel() <-chan error {
+	return r.errors
 }
 
 /*
@@ -85,10 +95,12 @@ type FailSilentRunner struct {
 	errorcloser        sync.Once
 	finished           bool
 	Name               string
+	firstErrorSetter   sync.Once
+	firstError         error
 }
 
 func NewFailSilentRunner() *FailSilentRunner {
-	return &FailSilentRunner{make([]Operator, 0, 2), make(chan bool), sync.Mutex{}, make(chan error, 1), &sync.WaitGroup{}, sync.Once{}, false, "GenericRunner"}
+	return &FailSilentRunner{make([]Operator, 0, 2), make(chan bool), sync.Mutex{}, make(chan error, 1), &sync.WaitGroup{}, sync.Once{}, false, "GenericRunner", sync.Once{}, nil}
 }
 
 func (c *FailSilentRunner) SetName(name string) {
@@ -101,12 +113,7 @@ func (r *FailSilentRunner) WaitGroup() *sync.WaitGroup {
 
 func (r *FailSilentRunner) Wait() error {
 	r.wg.Wait()
-	select {
-	case e := <-r.ErrorChannel():
-		return e
-	default:
-		return nil
-	}
+	return r.firstError
 }
 
 /* error channel returns errors of the ops, as many as it can, will close after all ops finish */
@@ -149,6 +156,7 @@ func (r *FailSilentRunner) AsyncRun(op Operator, startCloser bool) {
 			case r.errors <- err:
 			default:
 			}
+			r.firstErrorSetter.Do(func() { r.firstError = err })
 		}
 		//on first exit, the cn channel is closed
 		r.closenotifiermutex.Lock()

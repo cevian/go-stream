@@ -77,12 +77,12 @@ func (op *FaninOperator) Run() error {
 	select {
 	case err, errOk := <-op.runnerSrc.ErrorChannel():
 		if errOk {
-			slog.Errorf("Unexpected src err in fanin op", err)
+			slog.Errorf("Unexpected src err in fanin op %v", err)
 			op.Stop()
 			return err
 		}
 	case err := <-op.runnerDst.ErrorChannel():
-		slog.Errorf("Unexpected dst err in fanin op", err)
+		slog.Errorf("Unexpected dst err in fanin op %v", err)
 		op.Stop()
 		return err
 	}

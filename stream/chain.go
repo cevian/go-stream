@@ -35,7 +35,7 @@ func NewChain() *SimpleChain {
 }
 
 func NewSimpleChain() *SimpleChain {
-	return &SimpleChain{runner: NewRunner(), Name: "SimpleChain"}
+	return &SimpleChain{runner: NewFailSilentRunner(), Name: "SimpleChain"}
 }
 
 func (c *SimpleChain) Operators() []Operator {
