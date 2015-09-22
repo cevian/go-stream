@@ -24,13 +24,13 @@ type Runner interface {
 
 type FailFastRunner struct {
 	*FailSilentRunner
+	ErrorChannelReporter
 	failError sync.Once
-	errors    chan error
 }
 
 func NewRunner() *FailFastRunner {
 	r := NewFailSilentRunner()
-	return &FailFastRunner{r, sync.Once{}, make(chan error, cap(r.errors))}
+	return &FailFastRunner{r, NewErrorChannelReporter(cap(r.errors)), sync.Once{}}
 }
 
 func (t *FailFastRunner) AsyncRun(op Operator, startCloser bool) {
@@ -58,16 +58,16 @@ func (t *FailFastRunner) monitorErrors() {
 				t.HardStop()
 				stopped = true
 			}
-			t.errors <- err
+			t.ReportError(err)
 		} else {
-			close(t.errors)
+			t.ErrorChannelReporter.Close()
 			return
 		}
 	}
 }
 
-func (r *FailFastRunner) ErrorChannel() <-chan error {
-	return r.errors
+func (t *FailFastRunner) ErrorChannel() <-chan error {
+	return t.ErrorChannelReporter.ErrorChannel()
 }
 
 /*
