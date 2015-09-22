@@ -32,10 +32,36 @@ type FaninOperator struct {
 	runnerDst Runner
 	isRunning bool
 	//ops     []fanoutChildOp // this can be a single operator or a chain
+	err error
 }
 
 func NewFaninOp() *FaninOperator {
-	return &FaninOperator{NewHardStopChannelCloser() /*NewBaseIn(CHAN_SLACK),*/, nil, make(chan Object, CHAN_SLACK), NewRunner(), NewRunner(), false}
+	runnerSrc := NewRunner()
+	runnerDst := NewRunner()
+
+	op := &FaninOperator{NewHardStopChannelCloser() /*NewBaseIn(CHAN_SLACK),*/, nil, make(chan Object, CHAN_SLACK), runnerSrc, runnerDst, false, nil}
+
+	srcErr := func(err error) {
+		slog.Errorf("Unexpected src err in fanin op %v", err)
+		op.Stop()
+		if op.err == nil {
+			op.err = err
+		}
+	}
+
+	runnerSrc.SetErrorHandler(srcErr)
+
+	dstErr := func(err error) {
+		slog.Errorf("Unexpected dst err in fanin op %v", err)
+		op.Stop()
+		if op.err == nil {
+			op.err = err
+		}
+	}
+
+	runnerDst.SetErrorHandler(dstErr)
+
+	return op
 }
 
 func (op *FaninOperator) SetDest(newOp faninDestOp) {
@@ -49,7 +75,7 @@ func (op *FaninOperator) AddSrc(newOp faninSrcOp) {
 	newOp.SetCloseOnExit(false)
 	op.runnerSrc.Add(newOp)
 	if op.isRunning {
-		op.runnerSrc.AsyncRun(newOp, true)
+		op.runnerSrc.AsyncRun(newOp)
 	}
 }
 
@@ -68,38 +94,16 @@ func (op *FaninOperator) Stop() error {
 }
 
 func (op *FaninOperator) Run() error {
-	defer op.runnerSrc.Wait()
 	defer op.runnerDst.Wait()
 	op.isRunning = true
 	op.runnerSrc.AsyncRunAll()
 	op.runnerDst.AsyncRunAll()
 
-	select {
-	case err, errOk := <-op.runnerSrc.ErrorChannel():
-		if errOk {
-			slog.Errorf("Unexpected src err in fanin op %v", err)
-			op.Stop()
-			return err
-		}
-	case err := <-op.runnerDst.ErrorChannel():
-		slog.Errorf("Unexpected dst err in fanin op %v", err)
-		op.Stop()
-		return err
-	}
+	//only gets here if runnerSrc closed
 
-	//only gets here if runnerSrc closed errorChannel with no errors
-	//meaning that all srces exited softly
+	op.runnerSrc.Wait()
 	close(op.channel)
-	slog.Infof("Fanin srcs exited without error")
+	slog.Infof("Fanin srcs exited")
 
-	return nil
-
-	/*	select {
-		case <-op.runner.CloseNotifier():
-
-			slog.Logf(logger.Levels.Error, "Unexpected child close in fanin op")
-			op.runner.HardStop()
-			return errors.New("Unexpected child close")
-		}*/
-
+	return op.err
 }

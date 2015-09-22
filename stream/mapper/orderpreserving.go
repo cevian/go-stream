@@ -1,6 +1,7 @@
 package mapper
 
 import "runtime"
+
 import "sync"
 import "github.com/cevian/go-stream/stream"
 
@@ -112,11 +113,18 @@ func (p *OrderPreservingOp) Combiner() {
 	for workerid := range p.resultQ {
 		num_entries := <-p.resultsNum[workerid]
 		for l := 0; l < num_entries; l++ {
-			val, ok := <-p.results[workerid]
-			if !ok {
-				log.Panic("Should never get a closed channel here")
+			select {
+			case val, ok := <-p.results[workerid]:
+				if !ok {
+					log.Panic("Should never get a closed channel here")
+				}
+				select {
+				case p.Out() <- val:
+				case <-p.StopNotifier:
+				}
+			case <-p.StopNotifier:
+
 			}
-			p.Out() <- val
 		}
 	}
 }

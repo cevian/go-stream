@@ -2,6 +2,7 @@ package stream
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/cevian/go-stream/util/slog"
 )
@@ -17,10 +18,30 @@ type FanoutOperator struct {
 	outputs []chan Object
 	runner  Runner
 	//ops     []fanoutChildOp // this can be a single operator or a chain
+	fin chan struct{}
+	err error
 }
 
 func NewFanoutOp() *FanoutOperator {
-	return &FanoutOperator{NewHardStopChannelCloser(), NewBaseIn(CHAN_SLACK), make([]chan Object, 0, 2), NewRunner()}
+	r := NewFailFastRunner()
+	op := &FanoutOperator{NewHardStopChannelCloser(), NewBaseIn(CHAN_SLACK), make([]chan Object, 0, 2), r, make(chan struct{}), nil}
+
+	errHandler := func(err error) {
+		slog.Errorf("Unexpected child error in fanout op %v", err)
+		op.err = err
+	}
+
+	finHandler := func() {
+		select {
+		case <-op.fin:
+		default:
+			close(op.fin)
+		}
+	}
+
+	r.SetErrorHandler(errHandler)
+	r.SetFinishedHandler(finHandler)
+	return op
 }
 
 func (op *FanoutOperator) Add(newOp fanoutChildOp) {
@@ -53,10 +74,9 @@ func (op *FanoutOperator) Run() error {
 		case <-op.StopNotifier:
 			op.runner.HardStop()
 			return nil
-		case <-op.runner.CloseNotifier():
+		case <-op.fin:
 			slog.Errorf("Unexpected child close in fanout op")
-			op.runner.HardStop()
-			return errors.New("Unexpected child close")
+			return errors.New(fmt.Sprintf("Unexpected child close: %v", op.err))
 		}
 	}
 }

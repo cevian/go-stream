@@ -19,13 +19,28 @@ type DistributeOperator struct {
 	mapper        func(Object) DistribKey
 	branchCreator func(DistribKey) (DistributorChildOp, bool)
 	//the 2nd returnd tells the distributor whether or not to run the new op
-	outputs map[DistribKey]chan<- Object
-	runner  Runner
+	outputs       map[DistribKey]chan<- Object
+	runner        Runner
+	closenotifier <-chan struct{}
 }
 
 func NewDistributor(mapp func(Object) DistribKey, creator func(DistribKey) (DistributorChildOp, bool)) *DistributeOperator {
-	return &DistributeOperator{NewHardStopChannelCloser(),
-		NewBaseIn(CHAN_SLACK), mapp, creator, make(map[DistribKey]chan<- Object), NewRunner()}
+	r := NewRunner()
+
+	cn := make(chan struct{}, 1)
+	d := &DistributeOperator{NewHardStopChannelCloser(),
+		NewBaseIn(CHAN_SLACK), mapp, creator, make(map[DistribKey]chan<- Object), r, cn}
+
+	och := func(err error) {
+		select {
+		case <-cn:
+		default:
+			close(cn)
+		}
+	}
+	r.SetOpCloseHandler(och)
+
+	return d
 }
 
 func (op *DistributeOperator) createBranch(key DistribKey) {
@@ -35,7 +50,7 @@ func (op *DistributeOperator) createBranch(key DistribKey) {
 	op.runner.Add(newop)
 	op.outputs[key] = ch
 	if shouldRun {
-		op.runner.AsyncRun(newop, false)
+		op.runner.AsyncRun(newop)
 	}
 }
 
@@ -69,7 +84,7 @@ func (op *DistributeOperator) Run() error {
 		case <-op.StopNotifier:
 			op.runner.HardStop()
 			return nil
-		case <-op.runner.CloseNotifier():
+		case <-op.closenotifier:
 			slog.Errorf("Unexpected child close in distribute op")
 			op.runner.HardStop()
 			return errors.New("Unexpected distribute child close")

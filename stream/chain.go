@@ -35,7 +35,25 @@ func NewChain() *SimpleChain {
 }
 
 func NewSimpleChain() *SimpleChain {
-	return &SimpleChain{runner: NewFailSilentRunner(), Name: "SimpleChain"}
+	c := &SimpleChain{runner: NewFailSilentRunner(), Name: "SimpleChain"}
+
+	stopped := false
+	opCloseHandler := func(err error) {
+		if !stopped {
+			stopped = true
+			if err != nil {
+				slog.Warnf("Hard Close in %s %v", c.Name, err)
+				c.Stop()
+			} else {
+				slog.Infof("Soft Close in %s", c.Name)
+				c.SoftStop()
+			}
+		}
+	}
+
+	c.runner.SetOpCloseHandler(opCloseHandler)
+
+	return c
 }
 
 func (c *SimpleChain) Operators() []Operator {
@@ -101,20 +119,8 @@ func (c *SimpleChain) Stop() error {
 }
 
 func (c *SimpleChain) Wait() error {
-	//slog.Logf(logger.Levels.Info, "Waiting for closenotify %s", c.Name)
-	//<-c.runner.CloseNotifier()
-	err, errOk := <-c.runner.ErrorChannel()
-	if !c.sentstop {
-		if errOk {
-			slog.Warnf("Hard Close in %s %v", c.Name, err)
-			c.Stop()
-		} else {
-			slog.Infof("Soft Close in %s", c.Name)
-			c.SoftStop()
-		}
-	}
 	slog.Infof("Waiting for runner to finish in %s", c.Name)
-	c.runner.Wait()
+	err := c.runner.Wait()
 	slog.Infof("Exiting %s", c.Name)
 
 	return err
