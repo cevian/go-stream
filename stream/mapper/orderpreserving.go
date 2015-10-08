@@ -1,9 +1,6 @@
 package mapper
 
-import (
-	"fmt"
-	"runtime"
-)
+import "runtime"
 
 import "sync"
 import "github.com/cevian/go-stream/stream"
@@ -89,7 +86,6 @@ func (o *OrderPreservingOp) runWorker(worker Worker, workerid int) {
 					return
 				}
 			} else {
-				fmt.Println("Got close in op run")
 				o.resultQ <- workerid
 				o.lock <- true
 				outputer.sent = false
