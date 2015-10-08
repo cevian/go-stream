@@ -1,6 +1,9 @@
 package mapper
 
-import "runtime"
+import (
+	"fmt"
+	"runtime"
+)
 
 import "sync"
 import "github.com/cevian/go-stream/stream"
@@ -20,7 +23,6 @@ func NewOrderedOpWrapper(op *Op) *OrderPreservingOp {
 }
 
 type OrderPreservingOutputer struct {
-	*ConcurrentErrorHandler
 	sent         bool
 	out          chan<- stream.Object
 	num          chan<- int
@@ -47,7 +49,7 @@ func (o *OrderPreservingOutputer) Send(rec stream.Object) {
 }
 
 func NewOrderPreservingOutputer(out chan<- stream.Object, num chan<- int, stopNotifier <-chan bool) *OrderPreservingOutputer {
-	return &OrderPreservingOutputer{NewConcurrentErrorHandler(), false, out, num, stopNotifier}
+	return &OrderPreservingOutputer{false, out, num, stopNotifier}
 }
 
 type OrderPreservingOp struct {
@@ -77,25 +79,26 @@ func (o *OrderPreservingOp) runWorker(worker Worker, workerid int) {
 				o.resultQ <- workerid
 				o.lock <- true
 				outputer.sent = false
-				worker.Map(obj, outputer)
+				err := worker.Map(obj, outputer)
 				if !outputer.sent {
 					o.resultsNum[workerid] <- 0
 				}
-				if outputer.HasError() {
-					o.SetError(outputer.Error())
+				if err != nil {
+					o.SetError(err)
 					o.Stop()
 					return
 				}
 			} else {
+				fmt.Println("Got close in op run")
 				o.resultQ <- workerid
 				o.lock <- true
 				outputer.sent = false
-				o.WorkerClose(worker, outputer)
+				err := o.WorkerClose(worker, outputer)
 				if !outputer.sent {
 					o.resultsNum[workerid] <- 0
 				}
-				if outputer.HasError() {
-					o.SetError(outputer.Error())
+				if err != nil {
+					o.SetError(err)
 					o.Stop()
 				}
 				return

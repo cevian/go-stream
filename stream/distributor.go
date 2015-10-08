@@ -31,7 +31,7 @@ func NewDistributor(mapp func(Object) DistribKey, creator func(DistribKey) (Dist
 	d := &DistributeOperator{NewHardStopChannelCloser(),
 		NewBaseIn(CHAN_SLACK), mapp, creator, make(map[DistribKey]chan<- Object), r, cn}
 
-	och := func(err error) {
+	och := func(op Operator, err error) {
 		select {
 		case <-cn:
 		default:

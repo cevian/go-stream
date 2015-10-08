@@ -26,7 +26,7 @@ type Runner interface {
 	SetFinishedHandler(handler func())
 
 	/* handler to be called when an op exits */
-	SetOpCloseHandler(handler func(error))
+	SetOpCloseHandler(handler func(Operator, error))
 }
 
 type FailFastRunner struct {
@@ -67,7 +67,7 @@ type FailSilentRunner struct {
 	errorHandler   func(error)
 	finHandler     func()
 	finOnce        sync.Once
-	opCloseHandler func(error)
+	opCloseHandler func(Operator, error)
 	firstError     error
 	firstErrorOnce sync.Once
 }
@@ -113,8 +113,9 @@ func (r *FailSilentRunner) AsyncRun(op Operator) {
 	go func() {
 		defer r.wg.Done()
 		err := op.Run()
+		slog.Errorf("The following operator exited (%v, %v) in runner %s: %v", op, reflect.TypeOf(op), r.Name, err)
 		if err != nil {
-			slog.Errorf("Got an err from a child (%v, %v) in runner %s: %v", op, reflect.TypeOf(op), r.Name, err)
+			//slog.Errorf("Got an err from a child (%v, %v) in runner %s: %v", op, reflect.TypeOf(op), r.Name, err)
 			if r.errorHandler != nil {
 				r.errorHandler(err)
 			}
@@ -124,7 +125,7 @@ func (r *FailSilentRunner) AsyncRun(op Operator) {
 		}
 
 		if r.opCloseHandler != nil {
-			r.opCloseHandler(err)
+			r.opCloseHandler(op, err)
 		}
 	}()
 }
@@ -156,6 +157,6 @@ func (r *FailSilentRunner) SetFinishedHandler(handler func()) {
 }
 
 /* handler to be called when an op exits */
-func (r *FailSilentRunner) SetOpCloseHandler(handler func(error)) {
+func (r *FailSilentRunner) SetOpCloseHandler(handler func(Operator, error)) {
 	r.opCloseHandler = handler
 }
