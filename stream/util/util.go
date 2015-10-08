@@ -9,15 +9,17 @@ import (
 )
 
 func NewDropOp() *mapper.Op {
-	dropfn := func(input stream.Object, out mapper.Outputer) {
+	dropfn := func(input stream.Object, out mapper.Outputer) error {
+		return nil
 	}
 
 	return mapper.NewOp(dropfn, "DropOp")
 }
 
 func NewPassthruOp() *mapper.Op {
-	fn := func(input stream.Object, out mapper.Outputer) {
+	fn := func(input stream.Object, out mapper.Outputer) error {
 		out.Sending(1).Send(input)
+		return nil
 	}
 
 	return mapper.NewOp(fn, "PassthruOp")
@@ -29,7 +31,7 @@ func NewTailDataOp() stream.Operator {
 
 		logger := log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
 
-		fn := func(input stream.Object, outputer mapper.Outputer) {
+		fn := func(input stream.Object, outputer mapper.Outputer) error {
 
 			if value, ok := input.([]byte); ok {
 				logger.Printf("%s", string(value))
@@ -40,6 +42,7 @@ func NewTailDataOp() stream.Operator {
 			}
 
 			outputer.Sending(1).Send(input)
+			return nil
 		}
 
 		return mapper.NewWorker(fn, name)

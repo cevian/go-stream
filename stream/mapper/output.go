@@ -11,13 +11,9 @@ type Outputer interface {
 	Out(int) chan<- stream.Object
 
 	Sending(int) Sender
-	SetError(err error)
-	HasError() bool
-	Error() error
 }
 
 type SimpleOutputer struct {
-	*ConcurrentErrorHandler
 	ch           chan<- stream.Object
 	stopNotifier <-chan bool
 }
@@ -38,7 +34,7 @@ func (o *SimpleOutputer) Send(rec stream.Object) {
 }
 
 func NewSimpleOutputer(ch chan<- stream.Object, stopNotifier <-chan bool) Outputer {
-	return &SimpleOutputer{NewConcurrentErrorHandler(), ch, stopNotifier}
+	return &SimpleOutputer{ch, stopNotifier}
 }
 
 type ConcurrentErrorHandler struct {

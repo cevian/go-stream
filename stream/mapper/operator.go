@@ -4,12 +4,12 @@ import "runtime"
 import "sync"
 import "github.com/cevian/go-stream/stream"
 
-func NewOp(mapCallback func(obj stream.Object, out Outputer), tn string) *Op {
+func NewOp(mapCallback func(obj stream.Object, out Outputer) error, tn string) *Op {
 	gen := NewGenerator(mapCallback, tn)
 	return NewOpFromGenerator(gen, tn)
 }
 
-func NewOpExitor(mapCallback func(obj stream.Object, out Outputer),
+func NewOpExitor(mapCallback func(obj stream.Object, out Outputer) error,
 	exitCallback func(),
 	tn string) *Op {
 
@@ -34,7 +34,7 @@ func NewOpFromGenerator(gen Generator, tn string) *Op {
 }
 
 type Closer interface {
-	Close(out Outputer) //happens on worker for soft close only
+	Close(out Outputer) error //happens on worker for soft close only
 }
 
 type Stopper interface {
@@ -105,15 +105,19 @@ func (o *Op) WorkerStop(worker Worker) {
 	}
 }
 
-func (o *Op) WorkerClose(worker Worker, outputer Outputer) {
+func (o *Op) WorkerClose(worker Worker, outputer Outputer) error {
 	closer, ok := worker.(Closer)
 	if ok {
-		closer.Close(outputer)
+		err := closer.Close(outputer)
+		if err != nil {
+			return err
+		}
 	}
 	exitor, ok := worker.(Exitor)
 	if ok {
 		exitor.Exit()
 	}
+	return nil
 }
 
 func (o *Op) runWorker(worker Worker, outCh chan stream.Object) {
@@ -122,16 +126,16 @@ func (o *Op) runWorker(worker Worker, outCh chan stream.Object) {
 		select {
 		case obj, ok := <-o.In():
 			if ok {
-				worker.Map(obj, outputer)
-				if outputer.HasError() {
-					o.SetError(outputer.Error())
+				err := worker.Map(obj, outputer)
+				if err != nil {
+					o.SetError(err)
 					o.Stop()
 					return
 				}
 			} else {
-				o.WorkerClose(worker, outputer)
-				if outputer.HasError() {
-					o.SetError(outputer.Error())
+				err := o.WorkerClose(worker, outputer)
+				if err != nil {
+					o.SetError(err)
 					o.Stop()
 				}
 				return

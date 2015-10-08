@@ -3,6 +3,7 @@ package encoding
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 	"io"
 	"log"
 
@@ -52,9 +53,10 @@ func NewGobDecodeOp(
 	name := "GobDecodeOp"
 	closure := func() mapper.Worker {
 		decoder := GobGeneralDecoder()
-		fn := func(obj stream.Object, out mapper.Outputer) {
+		fn := func(obj stream.Object, out mapper.Outputer) error {
 			decoded := decFn(obj.([]byte), decoder)
 			out.Sending(1).Send(decoded)
+			return nil
 		}
 		return mapper.NewWorker(fn, name)
 	}
@@ -72,11 +74,11 @@ func NewGobEncodeOp() stream.InOutOperator {
 	name := "GobEncodeOp"
 	workerCreator := func() mapper.Worker {
 		var buf bytes.Buffer
-		fn := func(obj stream.Object, outputter mapper.Outputer) {
+		fn := func(obj stream.Object, outputter mapper.Outputer) error {
 			enc := gob.NewEncoder(&buf) //each output is an indy stream
 			err := enc.Encode(obj)
 			if err != nil {
-				log.Printf("Error marshaling gob: %v\n", err.Error())
+				return fmt.Errorf("Error marshaling gob: %v\n", err.Error())
 			}
 			n := buf.Len()
 			out := make([]byte, n)
@@ -86,13 +88,14 @@ func NewGobEncodeOp() stream.InOutOperator {
 			newn, err := buf.Read(out)
 			if newn != n || err != nil {
 				if err == nil {
-					log.Printf("Error marshaling gob on read: %v\t%v\n", newn, n)
+					return fmt.Errorf("Error marshaling gob on read: %v\t%v\n", newn, n)
 				} else {
-					log.Printf("Error marshaling gob on read: %v\t%v\t%v\n", newn, n, err.Error())
+					return fmt.Errorf("Error marshaling gob on read: %v\t%v\t%v\n", newn, n, err.Error())
 				}
 			}
 
 			outputter.Sending(1).Send(out)
+			return nil
 		}
 		return mapper.NewWorker(fn, name)
 	}

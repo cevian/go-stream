@@ -7,7 +7,7 @@ import "github.com/cevian/go-stream/stream"
 
 import "log"
 
-func NewOrderedOp(mapCallback func(obj stream.Object, out Outputer), tn string) *OrderPreservingOp {
+func NewOrderedOp(mapCallback func(obj stream.Object, out Outputer) error, tn string) *OrderPreservingOp {
 	gen := NewGenerator(mapCallback, tn)
 	mop := NewOpFromGenerator(gen, tn)
 	return NewOrderedOpWrapper(mop)

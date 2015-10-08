@@ -8,8 +8,9 @@ import (
 )
 
 func TestStoppedWhileSendingOutput(t *testing.T) {
-	fn := func(input stream.Object, out Outputer) {
+	fn := func(input stream.Object, out Outputer) error {
 		out.Out(1) <- input
+		return nil
 	}
 
 	passThru := NewOp(fn, "TestPassthruOp")
@@ -34,8 +35,9 @@ func TestStoppedWhileSendingOutput(t *testing.T) {
 }
 
 func TestStoppedWhileSendingSendInt(t *testing.T) {
-	fn := func(input stream.Object, out Outputer) {
+	fn := func(input stream.Object, out Outputer) error {
 		out.Sending(1).Send(input)
+		return nil
 	}
 
 	passThru := NewOp(fn, "TestPassthruOp")

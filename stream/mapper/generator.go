@@ -15,7 +15,7 @@ type Generator interface {
 	GetWorker() Worker
 }
 
-func NewGenerator(mapCallback func(obj stream.Object, out Outputer), tn string) *SimpleGenerator {
+func NewGenerator(mapCallback func(obj stream.Object, out Outputer) error, tn string) *SimpleGenerator {
 	return &SimpleGenerator{MapCallback: mapCallback, typename: tn}
 }
 
@@ -23,8 +23,8 @@ func NewGenerator(mapCallback func(obj stream.Object, out Outputer), tn string) 
 that is unique to each tuple processed but not state that is unique to a worker */
 
 type SimpleGenerator struct {
-	MapCallback        func(obj stream.Object, out Outputer)
-	CloseCallback      func(out Outputer)
+	MapCallback        func(obj stream.Object, out Outputer) error
+	CloseCallback      func(out Outputer) error
 	StopCallback       func()
 	WorkerExitCallback func() //called once per worker
 	SingleExitCallback func() //called once per op

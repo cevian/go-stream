@@ -1,11 +1,12 @@
 package encoding
 
 import (
+	"fmt"
 	"log"
 
-	"code.google.com/p/goprotobuf/proto"
 	"github.com/cevian/go-stream/stream"
 	"github.com/cevian/go-stream/stream/mapper"
+	"github.com/gogo/protobuf/proto"
 	//"reflect"
 )
 
@@ -33,9 +34,10 @@ func NewProtobufDecodeOp(decFn func([]byte, func([]byte, proto.Message)) stream.
 	name := "ProtobufDecodeOp"
 	workerCreator := func() mapper.Worker {
 		decoder := ProtobufGeneralDecoder()
-		fn := func(obj stream.Object, out mapper.Outputer) {
+		fn := func(obj stream.Object, out mapper.Outputer) error {
 			decoded := decFn(obj.([]byte), decoder)
 			out.Sending(1).Send(decoded)
+			return nil
 		}
 		return mapper.NewWorker(fn, name)
 	}
@@ -45,13 +47,14 @@ func NewProtobufDecodeOp(decFn func([]byte, func([]byte, proto.Message)) stream.
 func NewProtobufEncodeOp() stream.Operator {
 	name := "ProtobufEncodeOp"
 	workerCreator := func() mapper.Worker {
-		fn := func(obj stream.Object, outputer mapper.Outputer) {
+		fn := func(obj stream.Object, outputer mapper.Outputer) error {
 			in := obj.(proto.Message)
 			out, err := proto.Marshal(in)
 			if err != nil {
-				log.Printf("Error marshaling protobuf %v\t%#v", err, in)
+				return fmt.Errorf("Error marshaling protobuf %v\t%#v", err, in)
 			}
 			outputer.Sending(1).Send(out)
+			return nil
 		}
 		return mapper.NewWorker(fn, name)
 	}

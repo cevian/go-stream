@@ -19,13 +19,14 @@ func NewTimingOp() (oper stream.Operator, count *uint32, duration *time.Duration
 	var dur time.Duration
 
 	var start_batch_time *time.Time
-	fn := func(msg stream.Object, out mapper.Outputer) {
+	fn := func(msg stream.Object, out mapper.Outputer) error {
 		if start_batch_time == nil {
 			var now = time.Now()
 			start_batch_time = &now
 		}
 		atomic.AddUint32(counter, 1)
 		out.Sending(1).Send(msg)
+		return nil
 	}
 
 	closefn := func() {
