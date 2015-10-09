@@ -7,7 +7,7 @@ import (
 	"github.com/cevian/go-stream/stream"
 )
 
-func TestStoppedWhileSendingOutput(t *testing.T) {
+/*func TestStoppedWhileSendingOutput(t *testing.T) {
 	fn := func(input stream.Object, out Outputer) error {
 		out.Out(1) <- input
 		return nil
@@ -32,7 +32,7 @@ func TestStoppedWhileSendingOutput(t *testing.T) {
 	passThru.Stop()
 
 	run.Wait()
-}
+}*/
 
 func TestStoppedWhileSendingSendInt(t *testing.T) {
 	fn := func(input stream.Object, out Outputer) error {

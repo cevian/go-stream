@@ -7,9 +7,6 @@ type Sender interface {
 }
 
 type Outputer interface {
-	/* to be deprecated. Use Sending instead*/
-	Out(int) chan<- stream.Object
-
 	Sending(int) Sender
 }
 
@@ -66,4 +63,25 @@ func (o *ConcurrentErrorHandler) Error() error {
 	default:
 		return nil
 	}
+}
+
+type CollectOutputer struct {
+	data []stream.Object
+}
+
+func NewCollectOutputer() *CollectOutputer {
+	return &CollectOutputer{nil}
+}
+
+func (t *CollectOutputer) Sending(num int) Sender {
+	t.data = make([]stream.Object, 0, num)
+	return t
+}
+
+func (t *CollectOutputer) Send(obj stream.Object) {
+	t.data = append(t.data, obj)
+}
+
+func (t *CollectOutputer) Data() []stream.Object {
+	return t.data
 }

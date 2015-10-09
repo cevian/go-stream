@@ -36,11 +36,11 @@ type StdLogger struct {
 
 func (l *StdLogger) Logf(level Level, format string, v ...interface{}) {
 	if level >= Warn {
-		l.log.Printf(format, v...)
+		l.log.Output(4, fmt.Sprintf(format, v...))
 	} else if level == Error {
-		l.log.Printf(format, v...)
+		l.log.Output(4, fmt.Sprintf(format, v...))
 	} else if level == Panic {
-		l.log.Panicf(format, v...)
+		l.log.Output(4, fmt.Sprintf(format, v...))
 	}
 }
 
@@ -71,7 +71,7 @@ func init() {
 }
 
 func InitSimpleLogger() {
-	defaultLog = &StdLogger{stdlogger.New(os.Stderr, "", stdlogger.Lshortfile)}
+	defaultLog = &StdLogger{stdlogger.New(os.Stderr, "", stdlogger.Flags())}
 }
 
 /*

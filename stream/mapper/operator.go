@@ -78,15 +78,6 @@ func (o *Op) SetParallel(flag bool) *Op {
 
 func (op *Op) Stop() error {
 	err := op.BaseInOutOp.Stop()
-
-	/* TODO: deprecate */
-	/* hack to prevent blocking on output when stop is called */
-	/* important with Out() interface of Outputer solved with the */
-	/* Sending(x).Send() interface. Deprecate after Out() retired. */
-	go func() {
-		for _ = range op.Out() {
-		}
-	}()
 	return err
 }
 
@@ -181,4 +172,18 @@ func (o *Op) Run() error {
 	o.Exit()
 	//stop or close here?
 	return o.Error()
+}
+
+func (o *Op) ProcessOne(in stream.Object) ([]stream.Object, error) {
+	worker := o.Gen.GetWorker()
+	outputter := NewCollectOutputer()
+	err := worker.Map(in, outputter)
+	return outputter.Data(), err
+}
+func (o *Op) ProcessOneFirst(in stream.Object) (stream.Object, error) {
+	coll, err := o.ProcessOne(in)
+	if len(coll) < 1 {
+		return nil, err
+	}
+	return coll[0], err
 }
