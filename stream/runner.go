@@ -19,6 +19,10 @@ type Runner interface {
 	AsyncRunAll()
 	HardStop()
 
+	/* operator compat */
+	Run() error
+	Stop() error
+
 	/* handler will be called on each error */
 	SetErrorHandler(handler func(error))
 
@@ -82,6 +86,16 @@ func (c *FailSilentRunner) SetName(name string) {
 
 func (r *FailSilentRunner) WaitGroup() *sync.WaitGroup {
 	return r.wg
+}
+
+func (c *FailSilentRunner) Run() error {
+	c.AsyncRunAll()
+	return c.Wait()
+}
+
+func (c *FailSilentRunner) Stop() error {
+	c.HardStop()
+	return nil
 }
 
 func (r *FailSilentRunner) Wait() error {
