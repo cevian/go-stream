@@ -2,6 +2,7 @@ package stream
 
 import (
 	"reflect"
+	"sync"
 
 	"github.com/cevian/go-stream/util/slog"
 )
@@ -39,10 +40,9 @@ func NewChain() *SimpleChain {
 func NewSimpleChain() *SimpleChain {
 	c := &SimpleChain{runner: NewFailSilentRunner(), Name: "SimpleChain"}
 
-	stopped := false
+	var stopOnce sync.Once
 	opCloseHandler := func(op Operator, err error) {
-		if !stopped {
-			stopped = true
+		stopOnce.Do(func() {
 			if err != nil {
 				slog.Warnf("Hard close of chain %s was triggered by op  (%v, %v). Error: %v", c.Name, op, reflect.TypeOf(op), err)
 				c.Stop()
@@ -50,7 +50,7 @@ func NewSimpleChain() *SimpleChain {
 				slog.Infof("Soft close of chain %s was triggered by op  (%v, %v).", c.Name, op, reflect.TypeOf(op))
 				c.SoftStop()
 			}
-		}
+		})
 	}
 
 	c.runner.SetOpCloseHandler(opCloseHandler)
