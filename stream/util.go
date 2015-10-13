@@ -49,6 +49,8 @@ func (o *BaseOut) Out() chan Object {
 
 func (o *BaseOut) SetOut(c chan Object) {
 	o.out = c
+	//the only real reason to set out is to have a shared output, in which case shouldn't close
+	o.shouldClose = false
 }
 
 func (o *BaseOut) SetCloseOnExit(flag bool) {

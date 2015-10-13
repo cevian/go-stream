@@ -85,7 +85,7 @@ func (c *SimpleChain) Add(o Operator) Chain {
 	}
 
 	out, ok := o.(Out)
-	if ok {
+	if ok && nil == out.Out() {
 		slog.Infof("Setting output channel of %s", Name(o))
 		ch := make(chan Object, CHAN_SLACK)
 		out.SetOut(ch)
