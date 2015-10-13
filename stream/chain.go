@@ -29,7 +29,7 @@ type SimpleChain struct {
 	//	wg          *sync.WaitGroup
 	//	closenotify chan bool
 	//	closeerror  chan error
-	sentstop bool
+	stopOnce sync.Once
 	Name     string
 }
 
@@ -38,7 +38,7 @@ func NewChain() *SimpleChain {
 }
 
 func NewSimpleChain() *SimpleChain {
-	c := &SimpleChain{runner: NewFailSilentRunner(), Name: "SimpleChain"}
+	c := &SimpleChain{runner: NewFailSilentRunner(), Name: "SimpleChain", stopOnce: sync.Once{}}
 
 	var stopOnce sync.Once
 	opCloseHandler := func(op Operator, err error) {
@@ -101,22 +101,20 @@ func (c *SimpleChain) Start() error {
 }
 
 func (c *SimpleChain) SoftStop() error {
-	if !c.sentstop {
-		c.sentstop = true
+	c.stopOnce.Do(func() {
 		slog.Warnf("In soft close of chain %s", c.Name)
 		ops := c.runner.Operators()
 		ops[0].Stop()
-	}
+	})
 	return nil
 }
 
 /* A stop is a hard stop as per the Operator interface */
 func (c *SimpleChain) Stop() error {
-	if !c.sentstop {
-		c.sentstop = true
+	c.stopOnce.Do(func() {
 		slog.Warnf("In hard close of chain %s", c.Name)
 		c.runner.HardStop()
-	}
+	})
 	return nil
 }
 
