@@ -73,38 +73,3 @@ func init() {
 func InitSimpleLogger() {
 	defaultLog = &StdLogger{stdlogger.New(os.Stderr, "", stdlogger.Flags())}
 }
-
-/*
-func Init(logName string, logLevel string, logPrefix string, metrics *util.StreamingMetrics, metricsAddr string,
-	logAddress string, logNetwork string) {
-
-	// Change logger level
-	if err := logger.SetLogName(logName); err != nil {
-		logSetupFailure("Cannot set log name for program")
-	}
-
-	// And set the logger to write to a custom socket.
-	if logAddress != "" && logNetwork != "" {
-		if err := logger.SetCustomSocket(logAddress, logNetwork); err != nil {
-			logSetupFailure("Cannot set custom log socket program: %s %s %v", logAddress, logNetwork, err)
-		}
-	}
-
-	if ll, ok := logger.CfgLevels[strings.ToLower(logLevel)]; !ok {
-		logSetupFailure("Unsupported log level: " + logLevel)
-	} else {
-		glog := logger.New(ll)
-		if glog == nil {
-			logSetupFailure("Cannot start logger")
-		}
-		logPrefix := "[" + logPrefix + "] "
-		cfl := CFLog{glog, logPrefix}
-		defaultLog = &cfl
-	}
-
-	if metrics != nil {
-		Gm = metrics
-		go statsSender(&metricsAddr, &logPrefix)
-	}
-}
-*/
